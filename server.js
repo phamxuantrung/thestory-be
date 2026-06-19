@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 dotenv.config(); // Load env vars first!
+const { sendPushNotification } = require('./utils/webPush');
 
 const http = require('http');
 const { Server } = require('socket.io');
@@ -111,6 +112,16 @@ io.on('connection', (socket) => {
           const partnerSocketId = connectedUsers.get(senderUser.partnerId._id.toString());
           if (partnerSocketId) {
             io.to(partnerSocketId).emit('chat:message', _preloaded);
+          } else {
+            // Partner is offline, send push
+            const partnerFull = await User.findById(senderUser.partnerId._id);
+            if (partnerFull && partnerFull.pushSubscriptions && partnerFull.pushSubscriptions.length > 0) {
+              await sendPushNotification(partnerFull.pushSubscriptions, {
+                title: senderUser.displayName || 'Tin nhắn mới',
+                body: _preloaded.type === 'text' ? _preloaded.content : (_preloaded.type === 'sticker' ? 'Đã gửi một nhãn dán' : 'Đã gửi một hình ảnh'),
+                url: '/chat'
+              });
+            }
           }
         }
         return; // skip normal broadcast
@@ -138,6 +149,16 @@ io.on('connection', (socket) => {
         const partnerSocketId = connectedUsers.get(user.partnerId._id.toString());
         if (partnerSocketId) {
           io.to(partnerSocketId).emit('chat:message', populated);
+        } else {
+          // Partner is offline, send push
+          const partnerFull = await User.findById(user.partnerId._id);
+          if (partnerFull && partnerFull.pushSubscriptions && partnerFull.pushSubscriptions.length > 0) {
+            await sendPushNotification(partnerFull.pushSubscriptions, {
+              title: populated.sender.displayName || 'Tin nhắn mới',
+              body: populated.type === 'text' ? populated.content : (populated.type === 'sticker' ? 'Đã gửi một nhãn dán' : 'Đã gửi một hình ảnh'),
+              url: '/chat'
+            });
+          }
         }
       }
     } catch (err) {
