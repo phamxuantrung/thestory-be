@@ -43,6 +43,16 @@ const getPinnedMessages = async (req, res) => {
   }
 };
 
+// GET /api/chat/unread — Lấy số lượng tin nhắn chưa đọc
+const getUnreadCount = async (req, res) => {
+  try {
+    const count = await Message.countDocuments({ sender: { $ne: req.user.id }, isRead: false });
+    res.json({ success: true, message: 'OK', data: { count } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Lỗi server', data: null });
+  }
+};
+
 // POST /api/chat — Gửi tin nhắn (REST fallback, chủ yếu dùng socket)
 const sendMessage = async (req, res) => {
   try {
@@ -155,4 +165,13 @@ const markSeen = async (req, res) => {
   }
 };
 
-module.exports = { getMessages, getPinnedMessages, sendMessage, deleteMessage, togglePin, reactMessage, markSeen };
+module.exports = {
+  getMessages,
+  getPinnedMessages,
+  getUnreadCount,
+  sendMessage,
+  deleteMessage,
+  togglePin,
+  reactMessage,
+  markSeen,
+};

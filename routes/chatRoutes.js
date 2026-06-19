@@ -10,9 +10,11 @@ const {
   togglePin,
   reactMessage,
   markSeen,
+  getUnreadCount,
 } = require('../controllers/chatController');
 
 router.get('/', protect, getMessages);
+router.get('/unread', protect, getUnreadCount);
 router.get('/pinned', protect, getPinnedMessages);
 router.post('/', protect, uploadChatMedia.single('media'), sendMessage);
 router.delete('/:id', protect, deleteMessage);

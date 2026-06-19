@@ -209,31 +209,5 @@ const updatePartnerHobbies = async (req, res) => {
     });
   }
 };
-// POST /api/auth/push-subscription
-const subscribePush = async (req, res) => {
-  try {
-    const { subscription } = req.body;
-    if (!subscription || !subscription.endpoint) {
-      return res.status(400).json({ success: false, message: 'Dữ liệu không hợp lệ' });
-    }
 
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng' });
-    }
-
-    // Check if subscription already exists
-    const exists = user.pushSubscriptions.some(sub => sub.endpoint === subscription.endpoint);
-    if (!exists) {
-      user.pushSubscriptions.push(subscription);
-      await user.save();
-    }
-
-    res.status(200).json({ success: true, message: 'Đăng ký nhận thông báo thành công' });
-  } catch (error) {
-    console.error('Subscribe push error:', error);
-    res.status(500).json({ success: false, message: 'Lỗi server' });
-  }
-};
-
-module.exports = { login, logout, getMe, updateMe, updatePartnerHobbies, subscribePush };
+module.exports = { login, logout, getMe, updateMe, updatePartnerHobbies };
