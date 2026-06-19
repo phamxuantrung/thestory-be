@@ -47,6 +47,10 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/stickers', stickerRoutes);
 
 // Health check
+app.get('/', (req, res) => {
+  res.send('<h1>💕 TheStory Backend is running!</h1>');
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ success: true, message: '💕 TheStory API is running!' });
 });
