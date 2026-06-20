@@ -129,7 +129,7 @@ const getMe = async (req, res) => {
 
 const updateMe = async (req, res) => {
   try {
-    const { anniversaryDate, dailyMessage } = req.body;
+    const { anniversaryDate, dailyMessage, displayName, avatar } = req.body;
     
     // Tìm và cập nhật user
     const user = await User.findById(req.user.id);
@@ -157,10 +157,26 @@ const updateMe = async (req, res) => {
       await user.save();
     }
 
+    if (displayName !== undefined) {
+      user.displayName = displayName;
+      await user.save();
+    }
+
+    if (avatar !== undefined) {
+      user.avatar = avatar;
+      await user.save();
+    }
+
     res.status(200).json({
       success: true,
       message: 'Cập nhật thành công',
-      data: { anniversaryDate: user.anniversaryDate, dailyMessage: user.dailyMessage, dailyMessageDate: user.dailyMessageDate }
+      data: { 
+        anniversaryDate: user.anniversaryDate, 
+        dailyMessage: user.dailyMessage, 
+        dailyMessageDate: user.dailyMessageDate,
+        displayName: user.displayName,
+        avatar: user.avatar
+      }
     });
   } catch (error) {
     res.status(500).json({
@@ -210,4 +226,64 @@ const updatePartnerHobbies = async (req, res) => {
   }
 };
 
-module.exports = { login, logout, getMe, updateMe, updatePartnerHobbies };
+// POST /api/auth/me/avatar
+const uploadAvatar = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'Không tìm thấy file ảnh' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng' });
+    }
+
+    user.avatar = req.file.path;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Cập nhật ảnh đại diện thành công',
+      data: { avatar: user.avatar }
+    });
+  } catch (error) {
+    console.error('Upload avatar error:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server' });
+  }
+};
+
+// PUT /api/auth/me/password
+const changePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Vui lòng nhập đủ mật khẩu cũ và mới' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng' });
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: 'Mật khẩu cũ không chính xác' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Đổi mật khẩu thành công',
+      data: null
+    });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server' });
+  }
+};
+
+module.exports = { login, logout, getMe, updateMe, updatePartnerHobbies, uploadAvatar, changePassword };

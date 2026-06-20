@@ -13,6 +13,10 @@ const authRoutes = require('./routes/authRoutes');
 const memoryRoutes = require('./routes/memoryRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const stickerRoutes = require('./routes/stickerRoutes');
+const futureLetterRoutes = require('./routes/futureLetterRoutes');
+const moodRoutes = require('./routes/moodRoutes');
+const locationRoutes = require('./routes/locationRoutes');
+const treeRoutes = require('./routes/treeRoutes');
 const seedUsers = require('./utils/seedUsers');
 const User = require('./models/User');
 const Message = require('./models/Message');
@@ -46,6 +50,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/memories', memoryRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/stickers', stickerRoutes);
+app.use('/api/future-letters', futureLetterRoutes);
+app.use('/api/moods', moodRoutes);
+app.use('/api/locations', locationRoutes);
+app.use('/api/tree', treeRoutes);
 
 // Health check
 app.get('/', (req, res) => {
