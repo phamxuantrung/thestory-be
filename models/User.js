@@ -42,6 +42,10 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    birthday: {
+      type: Date,
+      default: null,
+    },
     partnerHobbies: [{
       category: { type: String, default: 'other' },
       text: { type: String, required: true },

@@ -17,7 +17,7 @@ const login = async (req, res) => {
 
     const user = await User.findOne({ username }).populate(
       'partnerId',
-      'displayName gender avatar isOnline lastSeen dailyMessage dailyMessageDate'
+      'displayName gender avatar isOnline lastSeen dailyMessage dailyMessageDate birthday'
     );
 
     if (!user) {
@@ -59,6 +59,7 @@ const login = async (req, res) => {
           gender: user.gender,
           avatar: user.avatar,
           anniversaryDate: user.anniversaryDate,
+          birthday: user.birthday,
           partnerHobbies: user.partnerHobbies || [],
           dailyMessage: user.dailyMessage,
           dailyMessageDate: user.dailyMessageDate,
@@ -103,7 +104,7 @@ const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
       .select('-password')
-      .populate('partnerId', 'displayName gender avatar isOnline lastSeen dailyMessage dailyMessageDate');
+      .populate('partnerId', 'displayName gender avatar isOnline lastSeen dailyMessage dailyMessageDate birthday');
 
     if (!user) {
       return res.status(404).json({
@@ -129,7 +130,7 @@ const getMe = async (req, res) => {
 
 const updateMe = async (req, res) => {
   try {
-    const { anniversaryDate, dailyMessage, displayName, avatar } = req.body;
+    const { anniversaryDate, birthday, dailyMessage, displayName, avatar } = req.body;
     
     // Tìm và cập nhật user
     const user = await User.findById(req.user.id);
@@ -149,6 +150,11 @@ const updateMe = async (req, res) => {
           await partner.save();
         }
       }
+    }
+
+    if (birthday !== undefined) {
+      user.birthday = birthday;
+      await user.save();
     }
 
     if (dailyMessage !== undefined) {
@@ -172,6 +178,7 @@ const updateMe = async (req, res) => {
       message: 'Cập nhật thành công',
       data: { 
         anniversaryDate: user.anniversaryDate, 
+        birthday: user.birthday,
         dailyMessage: user.dailyMessage, 
         dailyMessageDate: user.dailyMessageDate,
         displayName: user.displayName,

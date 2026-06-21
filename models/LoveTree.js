@@ -34,9 +34,74 @@ const loveTreeSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    witherReason: {
+      type: String,
+      default: null,
+    },
     fertilizers: {
       type: Number,
       default: 0,
+    },
+    coins: {
+      type: Number,
+      default: 0,
+    },
+    shields: {
+      type: Number,
+      default: 0,
+    },
+    growthPotions: {
+      type: Number,
+      default: 0,
+    },
+    pesticides: {
+      type: Number,
+      default: 0,
+    },
+    hasPest: {
+      type: Boolean,
+      default: false,
+    },
+    pestSpawnedAt: {
+      type: Date,
+      default: null,
+    },
+    lastPestDamageAt: {
+      type: Date,
+      default: null,
+    },
+    dailyExp: {
+      type: Number,
+      default: 0,
+    },
+    activeWeather: {
+      type: String,
+      enum: ['none', 'storm', 'drought'],
+      default: 'none',
+    },
+    weatherStartedAt: {
+      type: Date,
+      default: null,
+    },
+    lastWeatherDamageAt: {
+      type: Date,
+      default: null,
+    },
+    treeProps: {
+      type: Number,
+      default: 0, // Số cọc chống cây trong kho
+    },
+    hasTreeProp: {
+      type: Boolean,
+      default: false, // Trạng thái đang dùng cọc
+    },
+    droughtWaterings: {
+      type: Number,
+      default: 0, // Đếm số lần tưới nước trong lúc hạn hán (yêu cầu 3 lần)
+    },
+    lastDailyExpResetAt: {
+      type: Date,
+      default: null,
     },
     lastWateredBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -60,9 +125,28 @@ const loveTreeSchema = new mongoose.Schema(
       {
         user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         lastActionAt: { type: Date, default: null },
+        lastWateredAt: { type: Date, default: null },
+        lastSunlightAt: { type: Date, default: null },
       }
     ],
+    isStreakBroken: {
+      type: Boolean,
+      default: false,
+    },
+    streakBrokenAt: {
+      type: Date,
+      default: null,
+    },
     lastStreakUpdateAt: {
+      type: Date,
+      default: null,
+    },
+    weedCount: {
+      type: Number,
+      default: 0,
+      max: 3,
+    },
+    weedSpawnedAt: {
       type: Date,
       default: null,
     },
