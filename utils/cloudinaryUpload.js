@@ -26,8 +26,9 @@ const stickerMediaStorage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: 'TheStory_Stickers',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
-    resource_type: 'auto',
+    format: 'webp',
+    allowed_formats: ['png', 'webp', 'gif'],
+    resource_type: 'image',
   },
 });
 
