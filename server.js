@@ -67,14 +67,13 @@ app.get('/api/health', (req, res) => {
 });
 
 // Socket.IO — Realtime couple status
-const connectedUsers = new Map(); // userId -> socketId
 
 io.on('connection', (socket) => {
   console.log(`🔌 Socket connected: ${socket.id}`);
 
   // User đăng nhập vào socket
   socket.on('user:join', async (userId) => {
-    connectedUsers.set(userId, socket.id);
+    socket.join(userId);
     socket.userId = userId;
 
     // Cập nhật online trong DB
@@ -83,14 +82,11 @@ io.on('connection', (socket) => {
     // Thông báo cho partner
     const user = await User.findById(userId).populate('partnerId', '_id');
     if (user && user.partnerId) {
-      const partnerSocketId = connectedUsers.get(user.partnerId._id.toString());
-      if (partnerSocketId) {
-        io.to(partnerSocketId).emit('partner:online', {
-          userId,
-          isOnline: true,
-          timestamp: new Date(),
-        });
-      }
+      io.to(user.partnerId._id.toString()).emit('partner:online', {
+        userId,
+        isOnline: true,
+        timestamp: new Date(),
+      });
     }
     console.log(`💕 User ${userId} online`);
   });
@@ -99,10 +95,7 @@ io.on('connection', (socket) => {
   socket.on('memory:created', async (data) => {
     const user = await User.findById(data.createdBy).populate('partnerId', '_id');
     if (user && user.partnerId) {
-      const partnerSocketId = connectedUsers.get(user.partnerId._id.toString());
-      if (partnerSocketId) {
-        io.to(partnerSocketId).emit('memory:new', data);
-      }
+      io.to(user.partnerId._id.toString()).emit('memory:new', data);
     }
   });
 
@@ -118,10 +111,7 @@ io.on('connection', (socket) => {
         // Only notify the partner
         const senderUser = await User.findById(socket.userId).populate('partnerId', '_id');
         if (senderUser && senderUser.partnerId) {
-          const partnerSocketId = connectedUsers.get(senderUser.partnerId._id.toString());
-          if (partnerSocketId) {
-            io.to(partnerSocketId).emit('chat:message', _preloaded);
-          }
+          io.to(senderUser.partnerId._id.toString()).emit('chat:message', _preloaded);
         }
         return; // skip normal broadcast
       }
@@ -139,16 +129,13 @@ io.on('connection', (socket) => {
         .populate('sender', 'displayName gender avatar')
         .populate('replyTo', 'content sender type mediaUrl');
 
-      // Echo lại cho chính mình
-      socket.emit('chat:message', populated);
+      // Echo lại cho chính mình (tất cả các thiết bị)
+      io.to(socket.userId).emit('chat:message', populated);
 
       // Gửi cho partner
       const user = await User.findById(socket.userId).populate('partnerId', '_id');
       if (user && user.partnerId) {
-        const partnerSocketId = connectedUsers.get(user.partnerId._id.toString());
-        if (partnerSocketId) {
-          io.to(partnerSocketId).emit('chat:message', populated);
-        }
+        io.to(user.partnerId._id.toString()).emit('chat:message', populated);
       }
     } catch (err) {
       console.error('chat:send error:', err);
@@ -159,10 +146,7 @@ io.on('connection', (socket) => {
   socket.on('chat:typing', async ({ isTyping }) => {
     const user = await User.findById(socket.userId).populate('partnerId', '_id');
     if (user && user.partnerId) {
-      const partnerSocketId = connectedUsers.get(user.partnerId._id.toString());
-      if (partnerSocketId) {
-        io.to(partnerSocketId).emit('chat:typing', { isTyping, userId: socket.userId });
-      }
+      io.to(user.partnerId._id.toString()).emit('chat:typing', { isTyping, userId: socket.userId });
     }
   });
 
@@ -177,10 +161,7 @@ io.on('connection', (socket) => {
 
       const user = await User.findById(socket.userId).populate('partnerId', '_id');
       if (user && user.partnerId) {
-        const partnerSocketId = connectedUsers.get(user.partnerId._id.toString());
-        if (partnerSocketId) {
-          io.to(partnerSocketId).emit('chat:seen', { seenBy: socket.userId });
-        }
+        io.to(user.partnerId._id.toString()).emit('chat:seen', { seenBy: socket.userId });
       }
     } catch (err) {
       console.error('chat:seen error:', err);
@@ -206,11 +187,11 @@ io.on('connection', (socket) => {
       await msg.save();
 
       const payload = { messageId, reactions: msg.reactions };
-      socket.emit('chat:reacted', payload);
+      io.to(socket.userId).emit('chat:reacted', payload);
+      
       const user = await User.findById(socket.userId).populate('partnerId', '_id');
       if (user && user.partnerId) {
-        const partnerSocketId = connectedUsers.get(user.partnerId._id.toString());
-        if (partnerSocketId) io.to(partnerSocketId).emit('chat:reacted', payload);
+        io.to(user.partnerId._id.toString()).emit('chat:reacted', payload);
       }
     } catch (err) { console.error('chat:react error:', err); }
   });
@@ -222,11 +203,11 @@ io.on('connection', (socket) => {
       const msg = await Message.findByIdAndUpdate(messageId, { isPinned: true }, { new: true })
         .populate('sender', 'displayName');
       const payload = { pinnedMessage: msg };
-      socket.emit('chat:pinned', payload);
+      io.to(socket.userId).emit('chat:pinned', payload);
+      
       const user = await User.findById(socket.userId).populate('partnerId', '_id');
       if (user && user.partnerId) {
-        const partnerSocketId = connectedUsers.get(user.partnerId._id.toString());
-        if (partnerSocketId) io.to(partnerSocketId).emit('chat:pinned', payload);
+        io.to(user.partnerId._id.toString()).emit('chat:pinned', payload);
       }
     } catch (err) { console.error('chat:pin error:', err); }
   });
@@ -235,11 +216,11 @@ io.on('connection', (socket) => {
   socket.on('chat:unpin', async () => {
     try {
       await Message.updateMany({ isPinned: true }, { isPinned: false });
-      socket.emit('chat:unpinned');
+      io.to(socket.userId).emit('chat:unpinned');
+      
       const user = await User.findById(socket.userId).populate('partnerId', '_id');
       if (user && user.partnerId) {
-        const partnerSocketId = connectedUsers.get(user.partnerId._id.toString());
-        if (partnerSocketId) io.to(partnerSocketId).emit('chat:unpinned');
+        io.to(user.partnerId._id.toString()).emit('chat:unpinned');
       }
     } catch (err) { console.error('chat:unpin error:', err); }
   });
@@ -248,13 +229,10 @@ io.on('connection', (socket) => {
   socket.on('chat:poke', async () => {
     const user = await User.findById(socket.userId).populate('partnerId', '_id');
     if (user && user.partnerId) {
-      const partnerSocketId = connectedUsers.get(user.partnerId._id.toString());
-      if (partnerSocketId) {
-        io.to(partnerSocketId).emit('chat:poke', {
-          from: socket.userId,
-          displayName: user.displayName,
-        });
-      }
+      io.to(user.partnerId._id.toString()).emit('chat:poke', {
+        from: socket.userId,
+        displayName: user.displayName,
+      });
     }
   });
 
@@ -262,8 +240,7 @@ io.on('connection', (socket) => {
   socket.on('chat:delete', async ({ messageId }) => {
     const user = await User.findById(socket.userId).populate('partnerId', '_id');
     if (user && user.partnerId) {
-      const partnerSocketId = connectedUsers.get(user.partnerId._id.toString());
-      if (partnerSocketId) io.to(partnerSocketId).emit('chat:deleted', { messageId });
+      io.to(user.partnerId._id.toString()).emit('chat:deleted', { messageId });
     }
   });
 
@@ -273,33 +250,34 @@ io.on('connection', (socket) => {
   socket.on('memory:liked', async (data) => {
     const user = await User.findById(data.userId).populate('partnerId', '_id');
     if (user && user.partnerId) {
-      const partnerSocketId = connectedUsers.get(user.partnerId._id.toString());
-      if (partnerSocketId) {
-        io.to(partnerSocketId).emit('memory:liked', data);
-      }
+      io.to(user.partnerId._id.toString()).emit('memory:liked', data);
     }
   });
 
   // Disconnect
   socket.on('disconnect', async () => {
     if (socket.userId) {
-      connectedUsers.delete(socket.userId);
-      await User.findByIdAndUpdate(socket.userId, {
-        isOnline: false,
-        lastSeen: new Date(),
-      });
-
-      // Thông báo partner offline
-      const user = await User.findById(socket.userId).populate('partnerId', '_id');
-      if (user && user.partnerId) {
-        const partnerSocketId = connectedUsers.get(user.partnerId._id.toString());
-        if (partnerSocketId) {
-          io.to(partnerSocketId).emit('partner:online', {
-            userId: socket.userId,
+      try {
+        const sockets = await io.in(socket.userId).fetchSockets();
+        // If no more sockets for this user, mark as offline
+        if (sockets.length === 0) {
+          await User.findByIdAndUpdate(socket.userId, {
             isOnline: false,
             lastSeen: new Date(),
           });
+
+          // Thông báo partner offline
+          const user = await User.findById(socket.userId).populate('partnerId', '_id');
+          if (user && user.partnerId) {
+            io.to(user.partnerId._id.toString()).emit('partner:online', {
+              userId: socket.userId,
+              isOnline: false,
+              lastSeen: new Date(),
+            });
+          }
         }
+      } catch (err) {
+        console.error('disconnect error:', err);
       }
     }
     console.log(`🔌 Socket disconnected: ${socket.id}`);
