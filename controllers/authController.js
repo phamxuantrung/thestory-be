@@ -17,7 +17,7 @@ const login = async (req, res) => {
 
     const user = await User.findOne({ username }).populate(
       'partnerId',
-      'displayName gender avatar bio isOnline lastSeen dailyMessage dailyMessageDate birthday'
+      'displayName gender avatar bio isOnline isAngry lastSeen dailyMessage dailyMessageDate birthday'
     );
 
     if (!user) {
@@ -61,6 +61,7 @@ const login = async (req, res) => {
           anniversaryDate: user.anniversaryDate,
           birthday: user.birthday,
           bio: user.bio,
+          isAngry: user.isAngry,
           partnerHobbies: user.partnerHobbies || [],
           dailyMessage: user.dailyMessage,
           dailyMessageDate: user.dailyMessageDate,
@@ -105,7 +106,7 @@ const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
       .select('-password')
-      .populate('partnerId', 'displayName gender avatar bio isOnline lastSeen dailyMessage dailyMessageDate birthday');
+      .populate('partnerId', 'displayName gender avatar bio isOnline isAngry lastSeen dailyMessage dailyMessageDate birthday');
 
     if (!user) {
       return res.status(404).json({
@@ -131,7 +132,7 @@ const getMe = async (req, res) => {
 
 const updateMe = async (req, res) => {
   try {
-    const { anniversaryDate, birthday, dailyMessage, displayName, avatar, bio } = req.body;
+    const { anniversaryDate, birthday, dailyMessage, displayName, avatar, bio, isAngry } = req.body;
     
     // Tìm và cập nhật user
     const user = await User.findById(req.user.id);
@@ -182,6 +183,11 @@ const updateMe = async (req, res) => {
       await user.save();
     }
 
+    if (isAngry !== undefined) {
+      user.isAngry = isAngry;
+      await user.save();
+    }
+
     res.status(200).json({
       success: true,
       message: 'Cập nhật thành công',
@@ -192,7 +198,8 @@ const updateMe = async (req, res) => {
         dailyMessageDate: user.dailyMessageDate,
         displayName: user.displayName,
         avatar: user.avatar,
-        bio: user.bio
+        bio: user.bio,
+        isAngry: user.isAngry
       }
     });
   } catch (error) {

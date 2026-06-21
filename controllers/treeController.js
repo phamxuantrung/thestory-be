@@ -1,6 +1,19 @@
 const LoveTree = require('../models/LoveTree');
 const User = require('../models/User');
 
+const getVNDate = (date) => {
+  if (!date) return null;
+  return new Date(new Date(date).toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
+};
+
+const isSameDay = (d1, d2) => {
+  if (!d1 || !d2) return false;
+  const vn1 = getVNDate(d1);
+  const vn2 = getVNDate(d2);
+  return vn1.toDateString() === vn2.toDateString();
+};
+
+
 const getExpRequired = (level) => {
   switch(level) {
     case 1: return 300;   // Khoảng 1 tuần (Trung bình 40-50 EXP/ngày)
@@ -56,11 +69,7 @@ const getTree = async (req, res) => {
       return res.status(200).json({ success: true, data: tree, expRequired: getExpRequired(tree.level) });
     }
 
-    const isSameDay = (d1, d2) => {
-      if (!d1 || !d2) return false;
-      return new Date(d1).toDateString() === new Date(d2).toDateString();
-    };
-
+    
     const now = new Date();
     
     // Logic kiểm tra héo cây do thiếu chăm sóc (qua 24h) hoặc thiếu EXP
@@ -171,8 +180,7 @@ const getTree = async (req, res) => {
       await tree.save();
     }
 
-    const yesterday = new Date(now);
-    yesterday.setDate(now.getDate() - 1);
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     
     if (tree.level < 5 && tree.streak > 0 && tree.lastStreakUpdateAt && !isSameDay(tree.lastStreakUpdateAt, now) && !isSameDay(tree.lastStreakUpdateAt, yesterday)) {
       if (!tree.isStreakBroken) {
@@ -231,17 +239,13 @@ const interactTree = async (req, res) => {
 
 
     const now = new Date();
-    const hour = now.getHours();
+    const hour = getVNDate(now).getHours();
     const weather = req.body.weather || { temp: 25, rain: 0 };
     let expChange = 0;
     let msg = '';
     let bonusMsg = [];
 
-    const isSameDay = (d1, d2) => {
-      if (!d1 || !d2) return false;
-      return new Date(d1).toDateString() === new Date(d2).toDateString();
-    };
-
+    
     // Tìm interaction của user hiện tại
     let userInteraction = tree.userInteractions.find(ui => ui.user.toString() === req.user.id);
     if (!userInteraction) {
@@ -250,8 +254,7 @@ const interactTree = async (req, res) => {
     }
 
     // Reset streak nếu hôm qua bị đứt
-    const yesterday = new Date(now);
-    yesterday.setDate(now.getDate() - 1);
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     
     if (tree.level < 5 && tree.streak > 0 && tree.lastStreakUpdateAt && !isSameDay(tree.lastStreakUpdateAt, now) && !isSameDay(tree.lastStreakUpdateAt, yesterday)) {
       if (!tree.isStreakBroken) {
@@ -735,8 +738,7 @@ const restoreStreak = async (req, res) => {
     
     // Kéo dài chuỗi để hôm nay có thể tiếp tục
     const now = new Date();
-    const yesterday = new Date(now);
-    yesterday.setDate(now.getDate() - 1);
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     tree.lastStreakUpdateAt = yesterday; 
 
     await tree.save();
