@@ -8,19 +8,28 @@ const getMessages = async (req, res) => {
     const { page = 1, limit = 30 } = req.query;
     const skip = (page - 1) * limit;
 
-    const total = await Message.countDocuments();
-    const messages = await Message.find()
+    const user = await User.findById(req.user.id);
+    const query = {};
+    if (user && user.chatClearedAt) {
+      query.createdAt = { $gt: user.chatClearedAt };
+    }
+
+    const total = await Message.countDocuments(query);
+    const messages = await Message.find(query)
       .populate('sender', 'displayName gender avatar')
       .populate('replyTo', 'content sender type mediaUrl')
-      .sort({ createdAt: 1 })
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(Number(limit));
+
+    // Đảo ngược lại để tin nhắn cũ ở trên, mới ở dưới (đúng với UI chat)
+    const reversedMessages = messages.reverse();
 
     res.json({
       success: true,
       message: 'OK',
       data: {
-        messages,
+        messages: reversedMessages,
         pagination: { total, page: Number(page), pages: Math.ceil(total / limit) },
       },
     });
@@ -33,7 +42,13 @@ const getMessages = async (req, res) => {
 // GET /api/chat/pinned — Lấy tin nhắn đã ghim
 const getPinnedMessages = async (req, res) => {
   try {
-    const pinned = await Message.find({ isPinned: true })
+    const user = await User.findById(req.user.id);
+    const query = { isPinned: true };
+    if (user && user.chatClearedAt) {
+      query.createdAt = { $gt: user.chatClearedAt };
+    }
+
+    const pinned = await Message.find(query)
       .populate('sender', 'displayName gender')
       .sort({ createdAt: -1 })
       .limit(1);
@@ -46,7 +61,13 @@ const getPinnedMessages = async (req, res) => {
 // GET /api/chat/unread — Lấy số lượng tin nhắn chưa đọc
 const getUnreadCount = async (req, res) => {
   try {
-    const count = await Message.countDocuments({ sender: { $ne: req.user.id }, isRead: false });
+    const user = await User.findById(req.user.id);
+    const query = { sender: { $ne: req.user.id }, isRead: false };
+    if (user && user.chatClearedAt) {
+      query.createdAt = { $gt: user.chatClearedAt };
+    }
+
+    const count = await Message.countDocuments(query);
     res.json({ success: true, message: 'OK', data: { count } });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Lỗi server', data: null });
@@ -165,6 +186,17 @@ const markSeen = async (req, res) => {
   }
 };
 
+const clearChat = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    user.chatClearedAt = new Date();
+    await user.save();
+    res.json({ success: true, message: 'Đã xoá lịch sử trò chuyện phía bạn', data: null });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Lỗi server', data: null });
+  }
+};
+
 module.exports = {
   getMessages,
   getPinnedMessages,
@@ -174,4 +206,5 @@ module.exports = {
   togglePin,
   reactMessage,
   markSeen,
+  clearChat,
 };

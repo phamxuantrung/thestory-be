@@ -17,6 +17,7 @@ const futureLetterRoutes = require('./routes/futureLetterRoutes');
 const moodRoutes = require('./routes/moodRoutes');
 const locationRoutes = require('./routes/locationRoutes');
 const treeRoutes = require('./routes/treeRoutes');
+const questRoutes = require('./routes/quests');
 const seedUsers = require('./utils/seedUsers');
 const User = require('./models/User');
 const Message = require('./models/Message');
@@ -47,6 +48,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/quests', questRoutes);
 app.use('/api/memories', memoryRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/stickers', stickerRoutes);
@@ -166,12 +168,22 @@ io.on('connection', (socket) => {
 
   // Đã đọc
   socket.on('chat:seen', async () => {
-    const user = await User.findById(socket.userId).populate('partnerId', '_id');
-    if (user && user.partnerId) {
-      const partnerSocketId = connectedUsers.get(user.partnerId._id.toString());
-      if (partnerSocketId) {
-        io.to(partnerSocketId).emit('chat:seen', { seenBy: socket.userId });
+    try {
+      // Update DB
+      await Message.updateMany(
+        { isRead: false, sender: { $ne: socket.userId } },
+        { isRead: true }
+      );
+
+      const user = await User.findById(socket.userId).populate('partnerId', '_id');
+      if (user && user.partnerId) {
+        const partnerSocketId = connectedUsers.get(user.partnerId._id.toString());
+        if (partnerSocketId) {
+          io.to(partnerSocketId).emit('chat:seen', { seenBy: socket.userId });
+        }
       }
+    } catch (err) {
+      console.error('chat:seen error:', err);
     }
   });
 

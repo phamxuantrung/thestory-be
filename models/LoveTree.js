@@ -8,6 +8,10 @@ const loveTreeSchema = new mongoose.Schema(
         ref: 'User',
       },
     ],
+    isPlanted: {
+      type: Boolean,
+      default: false,
+    },
     level: {
       type: Number,
       default: 1, // 1: Hạt giống, 2: Mầm non, 3: Cây nhỏ, 4: Cây trưởng thành, 5: Ra hoa
@@ -57,6 +61,10 @@ const loveTreeSchema = new mongoose.Schema(
     pesticides: {
       type: Number,
       default: 0,
+    },
+    questRefreshData: {
+      week: { type: String, default: '' },
+      count: { type: Number, default: 0 }
     },
     hasPest: {
       type: Boolean,
@@ -149,6 +157,10 @@ const loveTreeSchema = new mongoose.Schema(
     weedSpawnedAt: {
       type: Date,
       default: null,
+    },
+    loveStones: {
+      type: Number,
+      default: 0,
     },
   },
   { timestamps: true }

@@ -28,12 +28,13 @@ const getTree = async (req, res) => {
       tree = await LoveTree.create({
         users: users,
         userInteractions: users.map(u => ({ user: u, lastActionAt: null })),
+        isPlanted: false,
         level: 1,
         exp: 0,
         waterLevel: 50,
         sunlightLevel: 50,
-        lastWateredAt: new Date(), // Cho phép 24h đầu tiên không bị héo
-        lastSunlightAt: new Date(),
+        lastWateredAt: null,
+        lastSunlightAt: null,
         lastStreakUpdateAt: null
       });
       tree = await LoveTree.findById(tree._id)
@@ -49,6 +50,10 @@ const getTree = async (req, res) => {
         }
       });
       if (updated) await tree.save();
+    }
+
+    if (!tree.isPlanted) {
+      return res.status(200).json({ success: true, data: tree, expRequired: getExpRequired(tree.level) });
     }
 
     const isSameDay = (d1, d2) => {
@@ -169,7 +174,7 @@ const getTree = async (req, res) => {
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
     
-    if (tree.streak > 0 && tree.lastStreakUpdateAt && !isSameDay(tree.lastStreakUpdateAt, now) && !isSameDay(tree.lastStreakUpdateAt, yesterday)) {
+    if (tree.level < 5 && tree.streak > 0 && tree.lastStreakUpdateAt && !isSameDay(tree.lastStreakUpdateAt, now) && !isSameDay(tree.lastStreakUpdateAt, yesterday)) {
       if (!tree.isStreakBroken) {
         tree.isStreakBroken = true;
         const brokenDate = new Date(tree.lastStreakUpdateAt);
@@ -194,6 +199,7 @@ const getTree = async (req, res) => {
         tree.waterLevel = 50;
         tree.sunlightLevel = 50;
         tree.userInteractions = []; // xoá lịch sử tương tác
+        tree.isPlanted = false; // Reset về lúc gieo hạt giống
         isTreeChanged = true;
       }
     }
@@ -247,7 +253,7 @@ const interactTree = async (req, res) => {
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
     
-    if (tree.streak > 0 && tree.lastStreakUpdateAt && !isSameDay(tree.lastStreakUpdateAt, now) && !isSameDay(tree.lastStreakUpdateAt, yesterday)) {
+    if (tree.level < 5 && tree.streak > 0 && tree.lastStreakUpdateAt && !isSameDay(tree.lastStreakUpdateAt, now) && !isSameDay(tree.lastStreakUpdateAt, yesterday)) {
       if (!tree.isStreakBroken) {
         tree.isStreakBroken = true;
         const brokenDate = new Date(tree.lastStreakUpdateAt);
@@ -271,6 +277,7 @@ const interactTree = async (req, res) => {
         tree.waterLevel = 50;
         tree.sunlightLevel = 50;
         tree.userInteractions = [];
+        tree.isPlanted = false; // Reset về lúc gieo hạt giống
       } else {
         return res.status(400).json({ 
           success: false, 
@@ -849,6 +856,7 @@ const devCheat = async (req, res) => {
         }
         break;
       case 'reset_all':
+        tree.isPlanted = false;
         tree.level = 1;
         tree.exp = 0;
         tree.dailyExp = 0;
@@ -977,8 +985,104 @@ const pullWeed = async (req, res) => {
   }
 };
 
+// POST /api/tree/plant
+const plantTree = async (req, res) => {
+  try {
+    let tree = await LoveTree.findOne({ users: { $in: [req.user.id] } });
+    if (!tree) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy cây' });
+    }
+
+    if (tree.isPlanted) {
+      return res.status(400).json({ success: false, message: 'Cây đã được trồng rồi' });
+    }
+
+    const now = new Date();
+    tree.isPlanted = true;
+    tree.level = 1;
+    tree.exp = 0;
+    tree.waterLevel = 50;
+    tree.sunlightLevel = 50;
+    tree.lastWateredAt = now;
+    tree.lastSunlightAt = now;
+    tree.lastDailyExpResetAt = now;
+    tree.isWithered = false;
+    tree.witherReason = null;
+    tree.dailyExp = 0;
+    
+    // reset interactions
+    tree.userInteractions = tree.users.map(u => ({
+      user: u,
+      lastActionAt: null,
+      lastWateredAt: null,
+      lastSunlightAt: null
+    }));
+
+    await tree.save();
+
+    res.status(200).json({ success: true, data: tree, message: 'Đã trồng cây thành công!', expRequired: getExpRequired(tree.level) });
+  } catch (error) {
+    console.error('plantTree error:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server', data: null });
+  }
+};
+
+// POST /api/tree/harvest-stone
+const harvestStone = async (req, res) => {
+  try {
+    let tree = await LoveTree.findOne({ users: { $in: [req.user.id] } });
+    if (!tree) return res.status(404).json({ success: false, message: 'Không tìm thấy cây' });
+
+    if (tree.level < 5 || tree.exp < getExpRequired(5)) {
+      return res.status(400).json({ success: false, message: 'Cây chưa đạt cấp tối đa và đầy EXP!' });
+    }
+
+    tree.loveStones = (tree.loveStones || 0) + 1;
+    tree.isPlanted = false; // Về trạng thái hạt giống
+    tree.level = 1;
+    tree.exp = 0;
+    tree.waterLevel = 50;
+    tree.sunlightLevel = 50;
+    tree.dailyExp = 0;
+    tree.isWithered = false;
+    tree.witherReason = null;
+    tree.hasPest = false;
+    tree.weedCount = 0;
+    tree.activeWeather = 'none';
+    tree.hasTreeProp = false;
+
+    await tree.save();
+
+    res.status(200).json({ success: true, data: tree, message: 'Thu hoạch thành công 1 Love Stone! 💎' });
+  } catch (error) {
+    console.error('harvestStone error:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server' });
+  }
+};
+
+// POST /api/tree/use-stone
+const useStone = async (req, res) => {
+  try {
+    let tree = await LoveTree.findOne({ users: { $in: [req.user.id] } });
+    if (!tree) return res.status(404).json({ success: false, message: 'Không tìm thấy thông tin' });
+
+    if (!tree.loveStones || tree.loveStones <= 0) {
+      return res.status(400).json({ success: false, message: 'Bạn không có Love Stone nào!' });
+    }
+
+    tree.loveStones -= 1;
+    await tree.save();
+
+    res.status(200).json({ success: true, data: tree, message: 'Đã đổi Love Stone lấy một buổi hẹn hò! 🍷🥩' });
+  } catch (error) {
+    console.error('useStone error:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server' });
+  }
+};
+
 module.exports = {
   getTree,
+  plantTree,
   interactTree,
   reviveTree,
   addReward,
@@ -990,4 +1094,6 @@ module.exports = {
   devCheat,
   sprayPest,
   pullWeed,
+  harvestStone,
+  useStone,
 };

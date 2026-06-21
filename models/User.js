@@ -20,6 +20,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    bio: {
+      type: String,
+      default: '',
+      maxLength: 300,
+    },
     gender: {
       type: String,
       enum: ['male', 'female'],
@@ -55,6 +60,10 @@ const userSchema = new mongoose.Schema(
       default: '',
     },
     dailyMessageDate: {
+      type: Date,
+      default: null,
+    },
+    chatClearedAt: {
       type: Date,
       default: null,
     },

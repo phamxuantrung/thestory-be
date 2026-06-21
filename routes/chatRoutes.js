@@ -11,11 +11,13 @@ const {
   reactMessage,
   markSeen,
   getUnreadCount,
+  clearChat,
 } = require('../controllers/chatController');
 
 router.get('/', protect, getMessages);
 router.get('/unread', protect, getUnreadCount);
 router.get('/pinned', protect, getPinnedMessages);
+router.post('/clear', protect, clearChat);
 router.post('/', protect, uploadChatMedia.single('media'), sendMessage);
 router.delete('/:id', protect, deleteMessage);
 router.put('/seen', protect, markSeen);
