@@ -17,7 +17,9 @@ const getISOWeek = (date) => {
 
 const getWeekIdentifier = () => {
   const now = new Date();
-  return `${now.getFullYear()}-W${getISOWeek(now)}`;
+  const vnTimeStr = now.toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' });
+  const vnDate = new Date(vnTimeStr);
+  return `${vnDate.getFullYear()}-W${getISOWeek(vnDate)}`;
 };
 
 const getActiveQuests = async (req, res) => {
