@@ -18,7 +18,9 @@ const moodRoutes = require('./routes/moodRoutes');
 const locationRoutes = require('./routes/locationRoutes');
 const treeRoutes = require('./routes/treeRoutes');
 const questRoutes = require('./routes/quests');
+const pushRoutes = require('./routes/pushRoutes');
 const seedUsers = require('./utils/seedUsers');
+const webpush = require('./utils/webpush');
 const User = require('./models/User');
 const Message = require('./models/Message');
 
@@ -56,6 +58,7 @@ app.use('/api/future-letters', futureLetterRoutes);
 app.use('/api/moods', moodRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/tree', treeRoutes);
+app.use('/api/push', pushRoutes);
 
 // Health check
 app.get('/', (req, res) => {
@@ -133,9 +136,45 @@ io.on('connection', (socket) => {
       io.to(socket.userId).emit('chat:message', populated);
 
       // Gửi cho partner
-      const user = await User.findById(socket.userId).populate('partnerId', '_id');
+      const user = await User.findById(socket.userId).populate('partnerId');
       if (user && user.partnerId) {
         io.to(user.partnerId._id.toString()).emit('chat:message', populated);
+
+        // Push notification nếu partner offline và có subscription
+        if (!user.partnerId.isOnline && user.partnerId.pushSubscriptions?.length > 0) {
+          const senderName = user.displayName || 'Người ấy';
+          const msgText = populated.type === 'text'
+            ? (populated.content || '').slice(0, 80)
+            : populated.type === 'image' ? '📷 Đã gửi một ảnh'
+            : populated.type === 'video' ? '🎥 Đã gửi một video'
+            : '💌 Tin nhắn mới';
+
+          const payload = JSON.stringify({
+            title: `💕 ${senderName}`,
+            body: msgText || '💌 Tin nhắn mới',
+            icon: '/pwa-192x192.png',
+            badge: '/pwa-192x192.png',
+            url: '/chat',
+          });
+
+          // Gửi đến tất cả thiết bị của partner
+          const validSubs = [];
+          for (const sub of user.partnerId.pushSubscriptions) {
+            try {
+              await webpush.sendNotification(sub, payload);
+              validSubs.push(sub);
+            } catch (pushErr) {
+              // Subscription hết hạn (410) — bỏ qua
+              if (pushErr.statusCode !== 410 && pushErr.statusCode !== 404) {
+                validSubs.push(sub);
+              }
+            }
+          }
+          // Dọn subscription hết hạn
+          if (validSubs.length !== user.partnerId.pushSubscriptions.length) {
+            await User.findByIdAndUpdate(user.partnerId._id, { pushSubscriptions: validSubs });
+          }
+        }
       }
     } catch (err) {
       console.error('chat:send error:', err);
