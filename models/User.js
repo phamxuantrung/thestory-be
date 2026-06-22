@@ -71,10 +71,6 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
-    pushSubscriptions: {
-      type: [mongoose.Schema.Types.Mixed],
-      default: [],
-    },
   },
   { timestamps: true }
 );
