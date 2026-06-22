@@ -140,8 +140,9 @@ io.on('connection', (socket) => {
       if (user && user.partnerId) {
         io.to(user.partnerId._id.toString()).emit('chat:message', populated);
 
-        // Push notification nếu partner offline và có subscription
-        if (!user.partnerId.isOnline && user.partnerId.pushSubscriptions?.length > 0) {
+        // Push notification (bỏ qua check isOnline để debug)
+        if (user.partnerId.pushSubscriptions?.length > 0) {
+          console.log(`Bắn push notification cho ${user.partnerId.displayName}, số lượng sub: ${user.partnerId.pushSubscriptions.length}`);
           const senderName = user.displayName || 'Người ấy';
           const msgText = populated.type === 'text'
             ? (populated.content || '').slice(0, 80)
@@ -163,7 +164,9 @@ io.on('connection', (socket) => {
             try {
               await webpush.sendNotification(sub, payload);
               validSubs.push(sub);
+              console.log('✅ Đã gửi push thành công tới 1 thiết bị');
             } catch (pushErr) {
+              console.log('❌ Lỗi gửi push:', pushErr.statusCode, pushErr.body);
               // Subscription hết hạn (410) — bỏ qua
               if (pushErr.statusCode !== 410 && pushErr.statusCode !== 404) {
                 validSubs.push(sub);
@@ -172,8 +175,11 @@ io.on('connection', (socket) => {
           }
           // Dọn subscription hết hạn
           if (validSubs.length !== user.partnerId.pushSubscriptions.length) {
+            console.log(`Dọn dẹp subs: còn lại ${validSubs.length}`);
             await User.findByIdAndUpdate(user.partnerId._id, { pushSubscriptions: validSubs });
           }
+        } else {
+           console.log(`Không bắn push vì ${user.partnerId.displayName} chưa có pushSubscriptions`);
         }
       }
     } catch (err) {
