@@ -533,8 +533,9 @@ const reviveTree = async (req, res) => {
     tree.witherReason = null;
     tree.waterLevel = 50;
     tree.sunlightLevel = 50;
-    tree.streak = 1; // Hồi sinh xong thì chuỗi bắt đầu lại từ 1
-    tree.lastStreakUpdateAt = new Date();
+    
+    // Khôi phục cây không làm mất chuỗi hiện tại
+    tree.lastStreakUpdateAt = new Date(); // Cập nhật để hôm nay coi như đã điểm danh
     tree.lastWateredAt = new Date();
     tree.lastSunlightAt = new Date();
     
