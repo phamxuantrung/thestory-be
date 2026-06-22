@@ -116,15 +116,15 @@ const getTree = async (req, res) => {
       tree.dailyExp = 0;
       tree.lastDailyExpResetAt = now;
 
-      // Spawn Pest Mechanic: 20% chance
-      if (!tree.isWithered && !shouldWither && !tree.hasPest && Math.random() < 0.20) {
+      // Spawn Pest Mechanic: 40% chance
+      if (!tree.isWithered && !shouldWither && !tree.hasPest && Math.random() < 0.40) {
         tree.hasPest = true;
         tree.pestSpawnedAt = now;
         tree.lastPestDamageAt = now;
       }
 
-      // Spawn Weed Mechanic: 15% chance
-      if (!tree.isWithered && !shouldWither && tree.weedCount < 3 && Math.random() < 0.15) {
+      // Spawn Weed Mechanic: 30% chance
+      if (!tree.isWithered && !shouldWither && tree.weedCount < 3 && Math.random() < 0.30) {
         tree.weedCount += 1;
         tree.weedSpawnedAt = now;
       }
@@ -143,21 +143,21 @@ const getTree = async (req, res) => {
           tree.droughtWaterings = 0;
         }
       } else if (!tree.isWithered && !shouldWither) {
-        // Spawn Weather: 5% storm, 5% drought
+        // Spawn Weather: 15% storm, 15% drought
         const weatherRand = Math.random();
-        if (weatherRand < 0.05) {
+        if (weatherRand < 0.15) {
           tree.activeWeather = 'storm';
           tree.weatherStartedAt = now;
           tree.lastWeatherDamageAt = now;
           tree.hasTreeProp = false;
-        } else if (weatherRand < 0.10) {
+        } else if (weatherRand < 0.30) {
           tree.activeWeather = 'drought';
           tree.weatherStartedAt = now;
           tree.droughtWaterings = 0;
         }
       }
 
-      if (!shouldWither && Math.random() < 0.05) {
+      if (!shouldWither && Math.random() < 0.15) {
         shouldWither = true;
         const reasons = [
           'Đêm qua bão lớn đã làm cây bị gãy cành!',
@@ -355,7 +355,7 @@ const interactTree = async (req, res) => {
         expChange = 0;
         msg = 'Đã tưới nước! Nhưng cây đang héo nên không nhận được EXP. Hãy dùng Phân bón để cứu cây!';
       } else {
-        if (Math.random() < 0.05) {
+        if (Math.random() < 0.10) {
           tree.isWithered = true;
           const reasons = [
             'Bạn vô tình tưới phải nước nóng làm cây bỏng rễ!',
@@ -436,7 +436,7 @@ const interactTree = async (req, res) => {
         expChange = 0;
         msg = 'Đã phơi nắng! Nhưng cây đang héo nên không nhận được EXP. Hãy dùng Phân bón để cứu cây!';
       } else {
-        if (Math.random() < 0.05) {
+        if (Math.random() < 0.10) {
           tree.isWithered = true;
           const reasons = [
             'Nắng gắt bất thường khiến cây bị cháy nắng héo rũ!',
