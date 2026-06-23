@@ -130,9 +130,12 @@ const getTree = async (req, res) => {
       }
 
       // Extreme Weather Logic
-      if (tree.activeWeather === 'drought' && tree.droughtWaterings < 3) {
-        shouldWither = true;
-        tree.witherReason = 'Cây đã chết khô do không được tưới đủ nước trong ngày Hạn hán!';
+      if (tree.activeWeather === 'drought') {
+        const anyFailed = tree.userInteractions.some(ui => (ui.droughtWaterings || 0) < 3);
+        if (anyFailed) {
+          shouldWither = true;
+          tree.witherReason = 'Cây đã chết khô do có người không tưới đủ 3 lần trong ngày Hạn hán!';
+        }
       }
 
       // End weather randomly or if withered
@@ -141,6 +144,7 @@ const getTree = async (req, res) => {
           tree.activeWeather = 'none';
           tree.hasTreeProp = false;
           tree.droughtWaterings = 0;
+          tree.userInteractions.forEach(ui => ui.droughtWaterings = 0);
         }
       } else if (!tree.isWithered && !shouldWither) {
         // Spawn Weather: 15% storm, 15% drought
@@ -154,6 +158,7 @@ const getTree = async (req, res) => {
           tree.activeWeather = 'drought';
           tree.weatherStartedAt = now;
           tree.droughtWaterings = 0;
+          tree.userInteractions.forEach(ui => ui.droughtWaterings = 0);
         }
       }
 
@@ -249,7 +254,7 @@ const interactTree = async (req, res) => {
     // Tìm interaction của user hiện tại
     let userInteraction = tree.userInteractions.find(ui => ui.user.toString() === req.user.id);
     if (!userInteraction) {
-      userInteraction = { user: req.user.id, lastActionAt: null, lastWateredAt: null, lastSunlightAt: null };
+      userInteraction = { user: req.user.id, lastActionAt: null, lastWateredAt: null, lastSunlightAt: null, droughtWaterings: 0 };
       tree.userInteractions.push(userInteraction);
     }
 
@@ -293,11 +298,11 @@ const interactTree = async (req, res) => {
     // Tưới nước
     if (action === 'water') {
       if (tree.activeWeather === 'drought') {
-        if (tree.lastWateredAt && (now - tree.lastWateredAt) < 4 * 60 * 60 * 1000) {
+        if (userInteraction.lastWateredAt && (now - userInteraction.lastWateredAt) < 4 * 60 * 60 * 1000) {
           return res.status(400).json({ success: false, message: 'Phải chờ ít nhất 4 tiếng kể từ lần tưới trước trong mùa hạn hán!' });
         }
-        if (tree.droughtWaterings >= 3) {
-          return res.status(400).json({ success: false, message: 'Hôm nay bạn đã tưới đủ 3 lần cho mùa hạn hán rồi!' });
+        if ((userInteraction.droughtWaterings || 0) >= 3) {
+          return res.status(400).json({ success: false, message: 'Bạn đã tưới đủ 3 lần cho mùa hạn hán rồi!' });
         }
       } else {
         if (isSameDay(userInteraction.lastWateredAt, now)) {
@@ -349,6 +354,7 @@ const interactTree = async (req, res) => {
       userInteraction.lastWateredAt = now;
       if (tree.activeWeather === 'drought') {
         tree.droughtWaterings += 1;
+        userInteraction.droughtWaterings = (userInteraction.droughtWaterings || 0) + 1;
       }
       
       if (tree.isWithered) {

@@ -135,6 +135,7 @@ const loveTreeSchema = new mongoose.Schema(
         lastActionAt: { type: Date, default: null },
         lastWateredAt: { type: Date, default: null },
         lastSunlightAt: { type: Date, default: null },
+        droughtWaterings: { type: Number, default: 0 },
       }
     ],
     isStreakBroken: {
