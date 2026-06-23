@@ -15,7 +15,7 @@ const isSameDay = (d1, d2) => {
 
 
 const getExpRequired = (level) => {
-  switch(level) {
+  switch (level) {
     case 1: return 300;   // Khoảng 1 tuần (Trung bình 40-50 EXP/ngày)
     case 2: return 700;   // Khoảng 2-3 tuần
     case 3: return 1200;  // Khoảng 1 tháng
@@ -69,9 +69,9 @@ const getTree = async (req, res) => {
       return res.status(200).json({ success: true, data: tree, expRequired: getExpRequired(tree.level) });
     }
 
-    
+
     const now = new Date();
-    
+
     // Logic kiểm tra héo cây do thiếu chăm sóc (qua 24h) hoặc thiếu EXP
     let shouldWither = false;
     let isTreeChanged = false;
@@ -97,7 +97,7 @@ const getTree = async (req, res) => {
         isTreeChanged = true;
       }
     }
-    
+
     // 1. Kiểm tra héo do không chăm sóc > 24h
     const waterDiff = tree.lastWateredAt ? now - tree.lastWateredAt : 0;
     const sunDiff = tree.lastSunlightAt ? now - tree.lastSunlightAt : 0;
@@ -186,7 +186,7 @@ const getTree = async (req, res) => {
     }
 
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    
+
     if (tree.level < 5 && tree.streak > 0 && tree.lastStreakUpdateAt && !isSameDay(tree.lastStreakUpdateAt, now) && !isSameDay(tree.lastStreakUpdateAt, yesterday)) {
       if (!tree.isStreakBroken) {
         tree.isStreakBroken = true;
@@ -250,7 +250,7 @@ const interactTree = async (req, res) => {
     let msg = '';
     let bonusMsg = [];
 
-    
+
     // Tìm interaction của user hiện tại
     let userInteraction = tree.userInteractions.find(ui => ui.user.toString() === req.user.id);
     if (!userInteraction) {
@@ -260,7 +260,7 @@ const interactTree = async (req, res) => {
 
     // Reset streak nếu hôm qua bị đứt
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    
+
     if (tree.level < 5 && tree.streak > 0 && tree.lastStreakUpdateAt && !isSameDay(tree.lastStreakUpdateAt, now) && !isSameDay(tree.lastStreakUpdateAt, yesterday)) {
       if (!tree.isStreakBroken) {
         tree.isStreakBroken = true;
@@ -287,10 +287,10 @@ const interactTree = async (req, res) => {
         tree.userInteractions = [];
         tree.isPlanted = false; // Reset về lúc gieo hạt giống
       } else {
-        return res.status(400).json({ 
-          success: false, 
+        return res.status(400).json({
+          success: false,
           needsStreakDecision: true,
-          message: 'Chuỗi đã gãy! Hãy mở Túi Vật Phẩm dùng Khiên để khôi phục hoặc Bỏ qua (Reset).' 
+          message: 'Chuỗi đã gãy! Hãy mở Túi Vật Phẩm dùng Khiên để khôi phục hoặc Bỏ qua (Reset).'
         });
       }
     }
@@ -311,7 +311,7 @@ const interactTree = async (req, res) => {
       }
 
       let baseExp = 15;
-      
+
       // Thời tiết
       if (tree.activeWeather === 'storm') {
         baseExp -= 20;
@@ -356,7 +356,7 @@ const interactTree = async (req, res) => {
         tree.droughtWaterings += 1;
         userInteraction.droughtWaterings = (userInteraction.droughtWaterings || 0) + 1;
       }
-      
+
       if (tree.isWithered) {
         expChange = 0;
         msg = 'Đã tưới nước! Nhưng cây đang héo nên không nhận được EXP. Hãy dùng Phân bón để cứu cây!';
@@ -385,11 +385,11 @@ const interactTree = async (req, res) => {
         tree.witherReason = 'Trời đang hạn hán mà bạn còn phơi nắng làm cây chết khô ngay lập tức!';
         tree.sunlightLevel = 100;
         await tree.save();
-        return res.status(200).json({ 
-          success: true, 
-          message: `THẢM HỌA! ${tree.witherReason}`, 
-          data: tree, 
-          expRequired: getExpRequired(tree.level) 
+        return res.status(200).json({
+          success: true,
+          message: `THẢM HỌA! ${tree.witherReason}`,
+          data: tree,
+          expRequired: getExpRequired(tree.level)
         });
       }
 
@@ -437,7 +437,7 @@ const interactTree = async (req, res) => {
       tree.lastSunlightBy = req.user.id;
       tree.lastSunlightAt = now;
       userInteraction.lastSunlightAt = now;
-      
+
       if (tree.isWithered) {
         expChange = 0;
         msg = 'Đã phơi nắng! Nhưng cây đang héo nên không nhận được EXP. Hãy dùng Phân bón để cứu cây!';
@@ -506,8 +506,8 @@ const interactTree = async (req, res) => {
       .populate('lastWateredBy', 'displayName avatar')
       .populate('lastSunlightBy', 'displayName avatar');
 
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       message: action === 'water' ? 'Đã tưới nước cho cây 💧' : 'Đã phơi nắng cho cây ☀️',
       data: populated,
       expRequired: getExpRequired(populated.level),
@@ -520,6 +520,8 @@ const interactTree = async (req, res) => {
   }
 };
 
+// POST /api/tree/revive
+// POST /api/tree/revive
 // POST /api/tree/revive
 const reviveTree = async (req, res) => {
   try {
@@ -534,28 +536,22 @@ const reviveTree = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Bạn không đủ Phân Bón! Hãy chơi Minigame để kiếm thêm.' });
     }
 
+    // 1. Trừ vật phẩm phân bón
     tree.fertilizers -= 1;
+
+    // 2. CHỈ đưa trạng thái cây từ héo về bình thường
     tree.isWithered = false;
     tree.witherReason = null;
+
+    // 3. Đưa các chỉ số môi trường về mức an toàn trung bình
     tree.waterLevel = 50;
     tree.sunlightLevel = 50;
-    
-    // Khôi phục cây không làm mất chuỗi hiện tại
-    tree.lastStreakUpdateAt = new Date(); // Cập nhật để hôm nay coi như đã điểm danh
-    tree.lastWateredAt = new Date();
-    tree.lastSunlightAt = new Date();
-    
-    // Reset userInteractions to today
-    const now = new Date();
-    tree.userInteractions.forEach(ui => {
-      ui.lastActionAt = now;
-      ui.lastWateredAt = now;
-      ui.lastSunlightAt = now;
-    });
-    
-    // Reset dailyExp sau khi hồi sinh
-    tree.dailyExp = 0;
-    tree.lastDailyExpResetAt = now;
+
+    /* ĐÃ XOÁ BỎ HOÀN TOÀN:
+      - KHÔNG tự gán tree.lastWateredAt / lastSunlightAt về ngày hôm nay nữa.
+      - KHÔNG tự cập nhật userInteractions của 2 người về ngày hôm nay nữa.
+      - KHÔNG can thiệp vào tree.lastStreakUpdateAt.
+    */
 
     await tree.save();
 
@@ -563,7 +559,12 @@ const reviveTree = async (req, res) => {
       .populate('lastWateredBy', 'displayName avatar')
       .populate('lastSunlightBy', 'displayName avatar');
 
-    res.status(200).json({ success: true, message: 'Đã hồi sinh cây thành công! 🌸', data: populated, expRequired: getExpRequired(populated.level) });
+    res.status(200).json({
+      success: true,
+      message: 'Đã hồi sinh cây thành công! 🌸',
+      data: populated,
+      expRequired: getExpRequired(populated.level)
+    });
   } catch (error) {
     console.error('reviveTree error:', error);
     res.status(500).json({ success: false, message: 'Lỗi server' });
@@ -625,7 +626,7 @@ const buyItem = async (req, res) => {
     }
 
     await tree.save();
-    
+
     const populated = await LoveTree.findById(tree._id)
       .populate('lastWateredBy', 'displayName avatar')
       .populate('lastSunlightBy', 'displayName avatar');
@@ -657,16 +658,16 @@ const useProp = async (req, res) => {
 
     tree.treeProps -= 1;
     tree.hasTreeProp = true;
-    
+
     await tree.save();
 
     const populated = await LoveTree.findById(tree._id)
       .populate('lastWateredBy', 'displayName avatar')
       .populate('lastSunlightBy', 'displayName avatar');
 
-    res.status(200).json({ 
-      success: true, 
-      message: 'Đã dùng Cọc Chống Cây! Cây đã an toàn qua cơn bão.', 
+    res.status(200).json({
+      success: true,
+      message: 'Đã dùng Cọc Chống Cây! Cây đã an toàn qua cơn bão.',
       data: populated,
       expRequired: getExpRequired(populated.level)
     });
@@ -687,12 +688,12 @@ const usePotion = async (req, res) => {
     }
 
     tree.growthPotions -= 1;
-    
+
     // Tăng 50 EXP
     const expChange = 50;
     tree.exp = Math.max(0, tree.exp + expChange);
     tree.dailyExp += expChange;
-    
+
     // Xử lý Level Up
     let levelUpCount = 0;
     while (tree.level < 5 && tree.exp >= getExpRequired(tree.level)) {
@@ -714,9 +715,9 @@ const usePotion = async (req, res) => {
       .populate('lastWateredBy', 'displayName avatar')
       .populate('lastSunlightBy', 'displayName avatar');
 
-    res.status(200).json({ 
-      success: true, 
-      message: `Đã dùng Thuốc Tăng Trưởng! +${expChange} EXP.${levelUpMsg}`, 
+    res.status(200).json({
+      success: true,
+      message: `Đã dùng Thuốc Tăng Trưởng! +${expChange} EXP.${levelUpMsg}`,
       data: populated,
       expRequired: getExpRequired(populated.level)
     });
@@ -742,11 +743,11 @@ const restoreStreak = async (req, res) => {
     tree.shields -= 1;
     tree.isStreakBroken = false;
     tree.streakBrokenAt = null;
-    
+
     // Kéo dài chuỗi để hôm nay có thể tiếp tục
     const now = new Date();
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    tree.lastStreakUpdateAt = yesterday; 
+    tree.lastStreakUpdateAt = yesterday;
 
     await tree.save();
 
@@ -754,9 +755,9 @@ const restoreStreak = async (req, res) => {
       .populate('lastWateredBy', 'displayName avatar')
       .populate('lastSunlightBy', 'displayName avatar');
 
-    res.status(200).json({ 
-      success: true, 
-      message: 'Khôi phục chuỗi thành công! Bạn có thể tiếp tục chăm cây.', 
+    res.status(200).json({
+      success: true,
+      message: 'Khôi phục chuỗi thành công! Bạn có thể tiếp tục chăm cây.',
       data: populated,
       expRequired: getExpRequired(populated.level)
     });
@@ -786,9 +787,9 @@ const resetStreak = async (req, res) => {
       .populate('lastWateredBy', 'displayName avatar')
       .populate('lastSunlightBy', 'displayName avatar');
 
-    res.status(200).json({ 
-      success: true, 
-      message: 'Đã hủy chuỗi cũ.', 
+    res.status(200).json({
+      success: true,
+      message: 'Đã hủy chuỗi cũ.',
       data: populated,
       expRequired: getExpRequired(populated.level)
     });
@@ -902,9 +903,9 @@ const devCheat = async (req, res) => {
       .populate('lastWateredBy', 'displayName avatar')
       .populate('lastSunlightBy', 'displayName avatar');
 
-    res.status(200).json({ 
-      success: true, 
-      message: `Đã chạy cheat: ${action}`, 
+    res.status(200).json({
+      success: true,
+      message: `Đã chạy cheat: ${action}`,
       data: populated,
       expRequired: getExpRequired(populated.level)
     });
@@ -932,7 +933,7 @@ const sprayPest = async (req, res) => {
     tree.hasPest = false;
     tree.pestSpawnedAt = null;
     tree.lastPestDamageAt = null;
-    
+
     // Thưởng 5 EXP vì đã cứu cây
     const expChange = 5;
     tree.exp = Math.max(0, tree.exp + expChange);
@@ -944,11 +945,11 @@ const sprayPest = async (req, res) => {
       .populate('lastWateredBy', 'displayName avatar')
       .populate('lastSunlightBy', 'displayName avatar');
 
-    res.status(200).json({ 
-      success: true, 
-      data: populated, 
-      message: 'Đã diệt sạch sâu bọ! Cây được cộng 5 EXP.', 
-      expRequired: getExpRequired(populated.level) 
+    res.status(200).json({
+      success: true,
+      data: populated,
+      message: 'Đã diệt sạch sâu bọ! Cây được cộng 5 EXP.',
+      expRequired: getExpRequired(populated.level)
     });
   } catch (err) {
     console.error('sprayPest error:', err);
@@ -970,7 +971,7 @@ const pullWeed = async (req, res) => {
     if (tree.weedCount === 0) {
       tree.weedSpawnedAt = null;
     }
-    
+
     // Thưởng 5 EXP vì đã nhổ cỏ
     const expChange = 5;
     tree.exp = Math.max(0, tree.exp + expChange);
@@ -982,11 +983,11 @@ const pullWeed = async (req, res) => {
       .populate('lastWateredBy', 'displayName avatar')
       .populate('lastSunlightBy', 'displayName avatar');
 
-    res.status(200).json({ 
-      success: true, 
-      data: populated, 
-      message: 'Đã nhổ 1 cụm cỏ dại! Cây được cộng 5 EXP.', 
-      expRequired: getExpRequired(populated.level) 
+    res.status(200).json({
+      success: true,
+      data: populated,
+      message: 'Đã nhổ 1 cụm cỏ dại! Cây được cộng 5 EXP.',
+      expRequired: getExpRequired(populated.level)
     });
   } catch (err) {
     console.error('pullWeed error:', err);
@@ -1018,7 +1019,7 @@ const plantTree = async (req, res) => {
     tree.isWithered = false;
     tree.witherReason = null;
     tree.dailyExp = 0;
-    
+
     // reset interactions
     tree.userInteractions = tree.users.map(u => ({
       user: u,
