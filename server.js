@@ -19,6 +19,7 @@ const locationRoutes = require('./routes/locationRoutes');
 const treeRoutes = require('./routes/treeRoutes');
 const questRoutes = require('./routes/quests');
 const storeRoutes = require('./routes/store');
+const heartRoutes = require('./routes/heartRoutes');
 const seedUsers = require('./utils/seedUsers');
 const User = require('./models/User');
 const Message = require('./models/Message');
@@ -58,6 +59,8 @@ app.use('/api/moods', moodRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/tree', treeRoutes);
 app.use('/api/store', storeRoutes);
+app.use('/api/heart', heartRoutes);
+
 
 // Health check
 app.get('/', (req, res) => {

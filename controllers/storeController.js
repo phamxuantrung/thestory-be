@@ -130,10 +130,6 @@ exports.buyProduct = async (req, res) => {
     user.heart -= totalPrice;
     await user.save();
     
-    // Tăng số lượng đã bán
-    product.sold = (product.sold || 0) + qty;
-    await product.save();
-
     // Tạo order
     const order = new StoreOrder({
       buyer: req.user.id,
@@ -226,6 +222,13 @@ exports.updateOrderStatus = async (req, res) => {
       if (order.status !== 'confirmed') return res.status(400).json({ success: false, message: 'Chỉ có thể thực hiện đơn đã xác nhận.' });
       
       order.status = 'fulfilled';
+
+      // Tăng số lượng đã bán khi đơn hoàn thành
+      const soldProduct = await StoreProduct.findById(order.product._id || order.product);
+      if (soldProduct) {
+        soldProduct.sold = (soldProduct.sold || 0) + (order.quantity || 1);
+        await soldProduct.save();
+      }
 
     } else {
       return res.status(400).json({ success: false, message: 'Action không hợp lệ.' });
