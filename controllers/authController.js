@@ -65,6 +65,7 @@ const login = async (req, res) => {
           partnerHobbies: user.partnerHobbies || [],
           dailyMessage: user.dailyMessage,
           dailyMessageDate: user.dailyMessageDate,
+          heart: user.heart,
         },
         partner: user.partnerId,
       },
@@ -199,7 +200,8 @@ const updateMe = async (req, res) => {
         displayName: user.displayName,
         avatar: user.avatar,
         bio: user.bio,
-        isAngry: user.isAngry
+        isAngry: user.isAngry,
+        heart: user.heart
       }
     });
   } catch (error) {

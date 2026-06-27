@@ -8,7 +8,7 @@ const { getVNDate, isSameDay, getMaxLevel, getExpRequired } = require('../utils/
 // GET /api/tree
 const getTree = async (req, res) => {
   try {
-    const partner = await User.findOne({ code: req.user.partnerCode });
+    const partner = req.user.partnerId ? await User.findById(req.user.partnerId) : null;
     const users = [req.user.id];
     if (partner) users.push(partner._id);
 
@@ -28,15 +28,19 @@ const getTree = async (req, res) => {
     }
 
     if (tree && partner) {
-      const hasPartner = tree.users.some(u => u.toString() === partner._id.toString());
-      if (!hasPartner) {
-        tree.users.push(partner._id);
-        const existingInteractions = tree.userInteractions.map(i => i.user.toString());
-        if (!existingInteractions.includes(partner._id.toString())) {
-          tree.userInteractions.push({ user: partner._id, lastActionAt: null });
+      let updated = false;
+      const bothUsers = [req.user.id.toString(), partner._id.toString()];
+      for (const u of bothUsers) {
+        if (!tree.users.some(tu => tu.toString() === u)) {
+          tree.users.push(u);
+          updated = true;
         }
-        await tree.save();
+        if (!tree.userInteractions.some(ui => ui.user.toString() === u)) {
+          tree.userInteractions.push({ user: u, lastActionAt: null });
+          updated = true;
+        }
       }
+      if (updated) await tree.save();
     }
 
     if (!tree) {
@@ -532,8 +536,8 @@ const usePotion = async (req, res) => {
 
     // Xử lý Level Up
     let levelUpCount = 0;
-    while (tree.level < 5 && tree.exp >= getExpRequired(tree.level)) {
-      tree.exp -= getExpRequired(tree.level);
+    while (tree.level < getMaxLevel(tree.treeType) && tree.exp >= getExpRequired(tree.level, tree.treeType)) {
+      tree.exp -= getExpRequired(tree.level, tree.treeType);
       tree.level += 1;
       levelUpCount++;
     }
@@ -541,8 +545,8 @@ const usePotion = async (req, res) => {
     if (levelUpCount > 0) {
       levelUpMsg = ` 🎉 Chúc mừng Cây đã lên cấp ${tree.level}!`;
     }
-    if (tree.level >= 5 && tree.exp > getExpRequired(5)) {
-      tree.exp = getExpRequired(5);
+    if (tree.level >= getMaxLevel(tree.treeType) && tree.exp > getExpRequired(getMaxLevel(tree.treeType), tree.treeType)) {
+      tree.exp = getExpRequired(getMaxLevel(tree.treeType), tree.treeType);
     }
 
     await tree.save();

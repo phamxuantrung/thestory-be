@@ -83,6 +83,10 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    questRefreshData: {
+      week: { type: String, default: '' },
+      count: { type: Number, default: 0 }
+    },
   },
   { timestamps: true }
 );

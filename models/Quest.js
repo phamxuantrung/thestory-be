@@ -3,8 +3,7 @@ const mongoose = require('mongoose');
 const questSchema = new mongoose.Schema(
   {
     coupleId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'LoveTree',
+      type: String,
       required: true,
     },
     weekIdentifier: {

@@ -48,7 +48,7 @@ const getStatus = async (req, res) => {
         user.dailySpinAssignedDate = todayDate; // Just mark as checked for today
       } else {
         // 30% chance
-        const isLucky = Math.random() < 0.3;
+        const isLucky = Math.random() < 0.5;
         if (isLucky) {
           user.dailySpinCount = 1;
         }
@@ -85,7 +85,7 @@ const spinWheel = async (req, res) => {
 
     // Deduct spin
     user.dailySpinCount = 0; // cannot accumulate, reset to 0
-    
+
     // Add heart
     if (prize.type === 'heart' && prize.value > 0) {
       user.heart += prize.value;

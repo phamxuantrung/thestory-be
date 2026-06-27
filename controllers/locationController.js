@@ -36,7 +36,7 @@ const addLocation = async (req, res) => {
 // GET /api/locations — Lấy danh sách địa điểm của cặp đôi
 const getLocations = async (req, res) => {
   try {
-    const partner = await User.findOne({ code: req.user.partnerCode });
+    const partner = req.user.partnerId ? await User.findById(req.user.partnerId) : null;
     const usersToFetch = [req.user.id];
     if (partner) usersToFetch.push(partner._id);
 

@@ -1,4 +1,4 @@
-const { isSameDay, getMaxLevel } = require('../utils/treeUtils');
+const { isSameDay, getMaxLevel, getVNDate } = require('../utils/treeUtils');
 
 const evaluateTreeState = async (tree, io) => {
   if (!tree.isPlanted) return false;
@@ -79,18 +79,21 @@ const evaluateTreeState = async (tree, io) => {
         tree.userInteractions.forEach(ui => ui.droughtWaterings = 0);
       }
     } else if (!tree.isWithered && !shouldWither) {
-      // Spawn Weather: 15% storm, 15% drought
-      const weatherRand = Math.random();
-      if (weatherRand < 0.15) {
-        tree.activeWeather = 'storm';
-        tree.weatherStartedAt = now;
-        tree.lastWeatherDamageAt = now;
-        tree.hasTreeProp = false;
-      } else if (weatherRand < 0.30) {
-        tree.activeWeather = 'drought';
-        tree.weatherStartedAt = now;
-        tree.droughtWaterings = 0;
-        tree.userInteractions.forEach(ui => ui.droughtWaterings = 0);
+      // Spawn Weather: 15% storm, 15% drought (ONLY IF AT 0:xx VN TIME)
+      const currentHour = getVNDate(now).getHours();
+      if (currentHour === 0) {
+        const weatherRand = Math.random();
+        if (weatherRand < 0.15) {
+          tree.activeWeather = 'storm';
+          tree.weatherStartedAt = now;
+          tree.lastWeatherDamageAt = now;
+          tree.hasTreeProp = false;
+        } else if (weatherRand < 0.30) {
+          tree.activeWeather = 'drought';
+          tree.weatherStartedAt = now;
+          tree.droughtWaterings = 0;
+          tree.userInteractions.forEach(ui => ui.droughtWaterings = 0);
+        }
       }
     }
 

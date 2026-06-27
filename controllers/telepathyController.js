@@ -1,5 +1,4 @@
 const TelepathyQuiz = require('../models/TelepathyQuiz');
-const LoveTree = require('../models/LoveTree');
 const User = require('../models/User');
 const { generateTelepathyQuestion } = require('../services/aiService');
 
@@ -22,20 +21,16 @@ const getTodayQuiz = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Bạn cần kết nối với người ấy trước.' });
     }
 
-    const tree = await LoveTree.findOne({ users: { $all: [userId, user.partnerId] } });
-    if (!tree) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy Cây tình yêu.' });
-    }
-
+    const coupleId = [userId.toString(), user.partnerId.toString()].sort().join('_');
     const todayDate = getVnDate();
     
     // Tìm quiz hôm nay
-    let quiz = await TelepathyQuiz.findOne({ coupleId: tree._id, date: todayDate });
+    let quiz = await TelepathyQuiz.findOne({ coupleId, date: todayDate });
     
     // Nếu chưa có, sinh mới
     if (!quiz) {
       // Lấy lịch sử vài ngày gần nhất để tránh lặp
-      const pastQuizzes = await TelepathyQuiz.find({ coupleId: tree._id })
+      const pastQuizzes = await TelepathyQuiz.find({ coupleId })
         .sort({ createdAt: -1 })
         .limit(10);
       const pastQuestions = pastQuizzes.map(q => `${q.optionA} - ${q.optionB}`);
@@ -43,7 +38,7 @@ const getTodayQuiz = async (req, res) => {
       const generated = await generateTelepathyQuestion(pastQuestions);
       
       quiz = new TelepathyQuiz({
-        coupleId: tree._id,
+        coupleId,
         date: todayDate,
         optionA: generated.optionA || 'Trà sữa',
         optionB: generated.optionB || 'Cà phê',
@@ -90,12 +85,20 @@ const answerQuiz = async (req, res) => {
     }
 
     const todayDate = getVnDate();
-    const tree = await LoveTree.findOne({ users: { $all: [userId, partnerId] } });
-    if (!tree) return res.status(404).json({ success: false, message: 'Không tìm thấy Cây tình yêu' });
+    const coupleId = [userId.toString(), partnerId.toString()].sort().join('_');
 
-    let quiz = await TelepathyQuiz.findOne({ coupleId: tree._id, date: todayDate });
+    let quiz = await TelepathyQuiz.findOne({ coupleId, date: todayDate });
     if (!quiz) {
       return res.status(404).json({ success: false, message: 'Chưa có quiz hôm nay' });
+    }
+
+    // NẾU ĐÃ TRẢ LỜI RỒI THÌ KHÔNG CHO ĐỔI NỮA
+    const existingChoice = (quiz.answers && typeof quiz.answers.get === 'function')
+      ? quiz.answers.get(userId.toString())
+      : (quiz.answers ? quiz.answers[userId.toString()] : null);
+      
+    if (existingChoice) {
+      return res.status(400).json({ success: false, message: 'Bạn đã trả lời rồi, không thể đổi!' });
     }
 
     // Ghi nhận câu trả lời

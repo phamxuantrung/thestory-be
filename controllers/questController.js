@@ -30,19 +30,15 @@ const getActiveQuests = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Bạn cần kết nối với người ấy trước.' });
     }
 
-    const tree = await LoveTree.findOne({ users: { $all: [userId, user.partnerId] } });
-    if (!tree) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy Cây tình yêu.' });
-    }
-
+    const coupleId = [userId.toString(), user.partnerId.toString()].sort().join('_');
     const weekIdentifier = getWeekIdentifier();
     
     // Tìm nhiệm vụ của tuần hiện tại
-    let quests = await Quest.find({ coupleId: tree._id, weekIdentifier });
+    let quests = await Quest.find({ coupleId, weekIdentifier });
 
     let refreshCount = 0;
-    if (tree.questRefreshData && tree.questRefreshData.week === weekIdentifier) {
-      refreshCount = tree.questRefreshData.count || 0;
+    if (user.questRefreshData && user.questRefreshData.week === weekIdentifier) {
+      refreshCount = user.questRefreshData.count || 0;
     }
 
     res.json({ success: true, data: quests, refreshCount });
@@ -64,13 +60,10 @@ const getQuestHistory = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Chưa kết nối partner.' });
     }
 
-    const tree = await LoveTree.findOne({ users: { $all: [userId, user.partnerId] } });
-    if (!tree) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy Cây tình yêu.' });
-    }
+    const coupleId = [userId.toString(), user.partnerId.toString()].sort().join('_');
 
     // Lấy tất cả nhiệm vụ đã hoàn thành, sắp xếp mới nhất lên đầu
-    const history = await Quest.find({ coupleId: tree._id, status: 'completed' })
+    const history = await Quest.find({ coupleId, status: 'completed' })
       .sort({ completedAt: -1 })
       .limit(50); // Giới hạn 50 cái gần nhất cho nhẹ
 
@@ -89,22 +82,18 @@ const generateQuests = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Chưa kết nối partner.' });
     }
 
-    const tree = await LoveTree.findOne({ users: { $all: [userId, user.partnerId._id] } });
-    if (!tree) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy Cây tình yêu.' });
-    }
-
+    const coupleId = [userId.toString(), user.partnerId._id.toString()].sort().join('_');
     const weekIdentifier = getWeekIdentifier();
     const { force } = req.body || {};
 
     let refreshCount = 0;
-    if (tree.questRefreshData && tree.questRefreshData.week === weekIdentifier) {
-      refreshCount = tree.questRefreshData.count || 0;
+    if (user.questRefreshData && user.questRefreshData.week === weekIdentifier) {
+      refreshCount = user.questRefreshData.count || 0;
     } else {
-      tree.questRefreshData = { week: weekIdentifier, count: 0 };
+      user.questRefreshData = { week: weekIdentifier, count: 0 };
     }
 
-    let existingQuests = await Quest.find({ coupleId: tree._id, weekIdentifier });
+    let existingQuests = await Quest.find({ coupleId, weekIdentifier });
     
     if (existingQuests.length > 0) {
       if (force) {
@@ -118,7 +107,7 @@ const generateQuests = async (req, res) => {
           await Quest.deleteMany({ _id: { $in: pendingIds } });
         }
         // Lấy lại danh sách nhiệm vụ (chỉ còn những cái đã hoàn thành)
-        existingQuests = await Quest.find({ coupleId: tree._id, weekIdentifier });
+        existingQuests = await Quest.find({ coupleId, weekIdentifier });
         
         // Nếu đã đủ 5 nhiệm vụ hoàn thành thì không cho tạo thêm
         if (existingQuests.length >= 5) {
@@ -141,7 +130,7 @@ const generateQuests = async (req, res) => {
     const allHobbies = [...(user.partnerHobbies || []), ...(user.partnerId.partnerHobbies || [])];
 
     // Lấy lịch sử nhiệm vụ (10 nhiệm vụ gần nhất)
-    const pastQuests = await Quest.find({ coupleId: tree._id }).sort({ createdAt: -1 }).limit(10);
+    const pastQuests = await Quest.find({ coupleId }).sort({ createdAt: -1 }).limit(10);
     const pastTitles = pastQuests.map(q => q.title);
 
     // Gọi AI tạo nhiệm vụ
@@ -159,7 +148,7 @@ const generateQuests = async (req, res) => {
 
     // Lưu vào DB
     const questsToInsert = generatedQuests.map((q, index) => ({
-      coupleId: tree._id,
+      coupleId,
       weekIdentifier,
       title: q.title || q.Title || `Thử thách tuần ${index + 1}`,
       description: q.description || q.Description || 'Cùng nhau hoàn thành thử thách này để nhận thưởng nhé!',
@@ -173,9 +162,11 @@ const generateQuests = async (req, res) => {
     const allCurrentQuests = [...(existingQuests || []), ...newQuests];
 
     if (force) {
-      tree.questRefreshData.count += 1;
-      await tree.save();
-      refreshCount = tree.questRefreshData.count;
+      user.questRefreshData.count += 1;
+      await user.save();
+      // Đồng bộ sang partner
+      await User.findByIdAndUpdate(user.partnerId._id, { questRefreshData: user.questRefreshData });
+      refreshCount = user.questRefreshData.count;
     }
 
     res.json({ success: true, data: allCurrentQuests, refreshCount });
@@ -272,10 +263,16 @@ const completeQuest = async (req, res) => {
       quest.completedAt = new Date();
       bothCompleted = true;
 
-      // Cộng phần thưởng
-      await LoveTree.findByIdAndUpdate(quest.coupleId, {
-        $inc: { exp: quest.expReward, coins: quest.coinReward }
-      });
+      // Thưởng 50 Tim cho mỗi người
+      await User.updateMany({ _id: { $in: quest.acceptedBy } }, { $inc: { heart: 50 } });
+
+      // Nếu có Cây Tình Yêu thì cộng thêm EXP và Coins
+      const tree = await LoveTree.findOne({ users: { $all: quest.acceptedBy } });
+      if (tree) {
+        await LoveTree.findByIdAndUpdate(tree._id, {
+          $inc: { exp: quest.expReward, coins: quest.coinReward }
+        });
+      }
     }
 
     await quest.save();
