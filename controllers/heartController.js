@@ -37,26 +37,24 @@ const CHECKIN_REWARDS = [5, 5, 8, 8, 10, 10, 20];
 
 // ── Pool nhiệm vụ Heart ───────────────────────────────────────────────────────
 const TASK_POOL = [
-  { taskId: 'chat_5msg',     title: 'Nhắn tin ngọt ngào',    description: 'Gửi 5 tin nhắn cho người ấy trong ngày',      category: 'chat',     icon: 'chat',            heartReward: 8  },
-  { taskId: 'chat_sticker',  title: 'Gửi sticker yêu thương', description: 'Gửi ít nhất 3 sticker trong cuộc trò chuyện', category: 'chat',     icon: 'emoji_emotions',  heartReward: 5  },
-  { taskId: 'memory_add',    title: 'Lưu giữ kỷ niệm',       description: 'Thêm 1 kỷ niệm mới vào album tình yêu',       category: 'memory',   icon: 'photo_album',     heartReward: 12 },
-  { taskId: 'mood_log',      title: 'Ghi nhận cảm xúc',      description: 'Cập nhật tâm trạng hôm nay của bạn',          category: 'mood',     icon: 'mood',            heartReward: 6  },
-  { taskId: 'letter_write',  title: 'Viết thư tương lai',     description: 'Viết 1 bức thư tương lai gửi người ấy',       category: 'letter',   icon: 'mail',            heartReward: 15 },
-  { taskId: 'location_save', title: 'Đánh dấu địa điểm',     description: 'Lưu 1 địa điểm yêu thích lên bản đồ',         category: 'location', icon: 'location_on',     heartReward: 10 },
-  { taskId: 'store_buy',     title: 'Ghé tạp hoá',            description: 'Đặt 1 đơn hàng từ tạp hoá của người ấy',      category: 'store',    icon: 'storefront',      heartReward: 18 },
-  { taskId: 'game_play',     title: 'Cùng nhau vui chơi',     description: 'Chơi ít nhất 1 trò chơi trong app',           category: 'game',     icon: 'sports_esports',  heartReward: 10 },
-  { taskId: 'tree_water',    title: 'Tưới cây tình yêu',      description: 'Vào trang cây tình yêu và tưới nước',         category: 'tree',     icon: 'psychiatry',      heartReward: 8  },
-  { taskId: 'quest_accept',  title: 'Nhận thử thách đôi',     description: 'Nhận 1 thử thách trong trang Thử Thách',      category: 'quest',    icon: 'task_alt',        heartReward: 12 },
-  { taskId: 'diary_write',   title: 'Viết nhật ký chung',     description: 'Thêm 1 trang vào nhật ký tình yêu',          category: 'diary',    icon: 'book',            heartReward: 10 },
-  { taskId: 'chat_good_morning', title: 'Chào buổi sáng',    description: 'Gửi tin nhắn đầu ngày cho người ấy',          category: 'chat',     icon: 'wb_sunny',        heartReward: 5  },
-  { taskId: 'photo_memory',  title: 'Ảnh kỷ niệm',           description: 'Đăng 1 kỷ niệm có ảnh mới',                  category: 'memory',   icon: 'add_a_photo',     heartReward: 15 },
-  { taskId: 'mood_3days',    title: 'Kiên trì ghi mood',      description: 'Ghi nhận tâm trạng 3 ngày trong tuần này',   category: 'mood',     icon: 'calendar_month',  heartReward: 20 },
-  { taskId: 'future_letter2',title: 'Thư bí mật',             description: 'Viết thư tương lai hẹn mở sau 1 tháng',      category: 'letter',   icon: 'lock',            heartReward: 18 },
-  { taskId: 'game_win',      title: 'Chiến thắng mini game',  description: 'Đạt điểm cao trong bất kỳ trò chơi nào',     category: 'game',     icon: 'emoji_events',    heartReward: 12 },
-  { taskId: 'store_browse',  title: 'Khám phá tạp hoá',       description: 'Ghé thăm tạp hoá của người ấy',              category: 'store',    icon: 'shopping_bag',    heartReward: 6  },
-  { taskId: 'map_visit',     title: 'Bản đồ yêu thương',      description: 'Mở bản đồ và xem lại các địa điểm đặc biệt', category: 'location', icon: 'map',             heartReward: 8  },
-  { taskId: 'chat_reaction', title: 'Phản ứng cảm xúc',       description: 'Dùng reaction emoji trong chat ít nhất 1 lần',category: 'chat',     icon: 'favorite',        heartReward: 5  },
-  { taskId: 'checkin_3days', title: 'Điểm danh chuyên cần',   description: 'Điểm danh ít nhất 3 ngày trong tuần này',    category: 'checkin',  icon: 'event_available', heartReward: 25 },
+  { taskId: 'chat_5msg', title: 'Nhắn tin ngọt ngào', description: 'Gửi 5 tin nhắn cho người ấy trong ngày', category: 'chat', icon: 'chat', heartReward: 8 },
+  { taskId: 'chat_sticker', title: 'Gửi sticker yêu thương', description: 'Gửi ít nhất 3 sticker trong cuộc trò chuyện', category: 'chat', icon: 'emoji_emotions', heartReward: 5 },
+  { taskId: 'memory_add', title: 'Lưu giữ kỷ niệm', description: 'Thêm 1 kỷ niệm mới vào album tình yêu', category: 'memory', icon: 'photo_album', heartReward: 12 },
+  { taskId: 'mood_log', title: 'Ghi nhận cảm xúc', description: 'Cập nhật tâm trạng hôm nay của bạn', category: 'mood', icon: 'mood', heartReward: 6 },
+  { taskId: 'letter_write', title: 'Viết thư tương lai', description: 'Viết 1 bức thư tương lai gửi người ấy', category: 'letter', icon: 'mail', heartReward: 15 },
+  { taskId: 'location_save', title: 'Đánh dấu địa điểm', description: 'Lưu 1 địa điểm yêu thích lên bản đồ', category: 'location', icon: 'location_on', heartReward: 10 },
+  { taskId: 'store_buy', title: 'Ghé tạp hoá', description: 'Đặt 1 đơn hàng từ tạp hoá của người ấy', category: 'store', icon: 'storefront', heartReward: 18 },
+  { taskId: 'game_play', title: 'Cùng nhau vui chơi', description: 'Chơi ít nhất 1 trò chơi trong app', category: 'game', icon: 'sports_esports', heartReward: 10 },
+  { taskId: 'tree_water', title: 'Tưới cây tình yêu', description: 'Vào trang cây tình yêu và tưới nước', category: 'tree', icon: 'psychiatry', heartReward: 8 },
+  { taskId: 'quest_accept', title: 'Nhận thử thách đôi', description: 'Nhận 1 thử thách trong trang Thử Thách', category: 'quest', icon: 'task_alt', heartReward: 12 },
+  { taskId: 'chat_good_morning', title: 'Chào buổi sáng', description: 'Gửi tin nhắn đầu ngày cho người ấy', category: 'chat', icon: 'wb_sunny', heartReward: 5 },
+  { taskId: 'photo_memory', title: 'Ảnh kỷ niệm', description: 'Đăng 1 kỷ niệm có ảnh mới', category: 'memory', icon: 'add_a_photo', heartReward: 15 },
+  { taskId: 'mood_3days', title: 'Kiên trì ghi mood', description: 'Ghi nhận tâm trạng 3 ngày trong tuần này', category: 'mood', icon: 'calendar_month', heartReward: 20 },
+  { taskId: 'future_letter2', title: 'Thư bí mật', description: 'Viết thư tương lai hẹn mở sau 1 tháng', category: 'letter', icon: 'lock', heartReward: 18 },
+  { taskId: 'game_win', title: 'Chiến thắng mini game', description: 'Đạt điểm cao trong bất kỳ trò chơi nào', category: 'game', icon: 'emoji_events', heartReward: 12 },
+  { taskId: 'map_visit', title: 'Bản đồ yêu thương', description: 'Mở bản đồ và xem lại các địa điểm đặc biệt', category: 'location', icon: 'map', heartReward: 8 },
+  { taskId: 'chat_reaction', title: 'Phản ứng cảm xúc', description: 'Dùng reaction emoji trong chat ít nhất 1 lần', category: 'chat', icon: 'favorite', heartReward: 5 },
+  { taskId: 'checkin_3days', title: 'Điểm danh chuyên cần', description: 'Điểm danh ít nhất 3 ngày trong tuần này', category: 'checkin', icon: 'event_available', heartReward: 25 },
 ];
 
 // Chọn ngẫu nhiên n nhiệm vụ từ pool, ưu tiên không trùng với tuần trước
@@ -168,14 +166,14 @@ exports.getTasks = async (req, res) => {
 };
 
 // ── Imports cho verify ───────────────────────────────────────────────────────
-const Message         = require('../models/Message');
-const Memory          = require('../models/Memory');
-const DailyMood       = require('../models/DailyMood');
-const FutureLetter    = require('../models/FutureLetter');
-const LoveLocation    = require('../models/LoveLocation');
-const StoreOrder      = require('../models/StoreOrder');
-const Quest           = require('../models/Quest');
-const LoveTree        = require('../models/LoveTree');
+const Message = require('../models/Message');
+const Memory = require('../models/Memory');
+const DailyMood = require('../models/DailyMood');
+const FutureLetter = require('../models/FutureLetter');
+const LoveLocation = require('../models/LoveLocation');
+const StoreOrder = require('../models/StoreOrder');
+const Quest = require('../models/Quest');
+const LoveTree = require('../models/LoveTree');
 
 const VN_OFFSET_MS = 7 * 60 * 60 * 1000; // UTC+7 in milliseconds
 
@@ -221,8 +219,17 @@ const VERIFIERS = {
 
   chat_good_morning: async (userId) => {
     const todayStart = getTodayStart();
-    const count = await Message.countDocuments({ sender: userId, createdAt: { $gte: todayStart } });
-    if (count < 1) return { ok: false, reason: 'Hãy gửi ít nhất 1 tin nhắn cho người ấy hôm nay đã nhé!' };
+
+    // Tính mốc 12:00 trưa nay (theo UTC)
+    const noonMs = todayStart.getTime() + (12 * 60 * 60 * 1000);
+    const noon = new Date(noonMs);
+
+    const msg = await Message.findOne({
+      sender: userId,
+      createdAt: { $gte: todayStart, $lt: noon }
+    });
+
+    if (!msg) return { ok: false, reason: 'Hãy gửi tin nhắn cho người ấy trước 12h trưa nay nhé!' };
     return { ok: true };
   },
 
@@ -305,11 +312,6 @@ const VERIFIERS = {
     return { ok: true };
   },
 
-  store_browse: async (userId) => {
-    // Honor system — reward thấp (6), không có event log browse
-    return { ok: true };
-  },
-
   // ── Quest ───────────────────────────────────────────────────────────────────
   quest_accept: async (userId, user) => {
     if (!user.partnerId) return { ok: false, reason: 'Bạn cần kết nối với người ấy trước.' };
@@ -347,14 +349,6 @@ const VERIFIERS = {
     return { ok: true };
   },
 
-  // ── Store browse ────────────────────────────────────────────────────────────
-  store_browse: async (userId) => {
-    // Kiểm tra đã từng đặt hàng bất kỳ lúc nào (có dùng tạp hoá)
-    const order = await StoreOrder.findOne({ buyer: userId });
-    if (!order) return { ok: false, reason: 'Hãy ghé tạp hoá và đặt ít nhất 1 đơn hàng để hoàn thành nhiệm vụ này!' };
-    return { ok: true };
-  },
-
   // ── Game ─────────────────────────────────────────────────────────────────────
   // Game sinh EXP cho cây, kiểm tra tree.exp > 0 hoặc tree đã đủ tuần active
   game_play: async (userId, user) => {
@@ -372,15 +366,7 @@ const VERIFIERS = {
     if (!tree) return { ok: true };
     if ((tree.exp || 0) < 10) return { ok: false, reason: 'Hãy chơi và đạt điểm trong ít nhất 1 trò chơi!' };
     return { ok: true };
-  },
-
-  // ── Diary — dùng DailyMood (SharedDiaryPage = ghi mood) ───────────────────
-  diary_write: async (userId) => {
-    const weekStart = getWeekStart();
-    const count = await DailyMood.countDocuments({ user: userId, date: { $gte: weekStart } });
-    if (count < 1) return { ok: false, reason: 'Hãy mở Nhật ký chung và ghi tâm trạng ít nhất 1 ngày trong tuần này!' };
-    return { ok: true };
-  },
+  }
 };
 
 exports.verifyTask = async (req, res) => {

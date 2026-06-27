@@ -88,6 +88,44 @@ Không xuất ra bất kỳ text nào khác ngoài chuỗi JSON chuẩn.
   }
 };
 
+const generateTelepathyQuestion = async (pastQuestions = []) => {
+  try {
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
+      generationConfig: {
+        responseMimeType: "application/json",
+      }
+    });
+
+    const prompt = `
+Bạn là một AI tạo câu hỏi "Thần giao cách cảm" (Telepathy Quiz) cho các cặp đôi.
+Mục tiêu: Đưa ra 2 tuỳ chọn (A và B) để xem 2 người có chọn giống nhau không.
+Yêu cầu:
+- 2 tuỳ chọn phải phổ biến, quen thuộc, dễ lựa chọn nhưng gây chia rẽ sở thích (VD: Chó - Mèo, Biển - Núi, Trà sữa - Cà phê, Mùa hè - Mùa đông, Marvel - DC).
+- Không được trùng lặp với các câu hỏi trước đây: ${pastQuestions.length > 0 ? pastQuestions.join(', ') : 'Chưa có'}.
+- Hãy sáng tạo và đa dạng chủ đề (Đồ ăn, Du lịch, Thói quen, Sở thích, Phim ảnh).
+- Từ ngữ ngắn gọn, tối đa 3-4 chữ mỗi tuỳ chọn.
+
+Trả về một JSON có định dạng:
+{
+  "optionA": "Tuỳ chọn 1",
+  "optionB": "Tuỳ chọn 2"
+}
+`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let text = response.text();
+
+    text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+    return JSON.parse(text);
+  } catch (error) {
+    console.error('Lỗi khi tạo câu hỏi thần giao cách cảm:', error);
+    return { optionA: 'Chó', optionB: 'Mèo' }; // Fallback
+  }
+};
+
 module.exports = {
-  generateCoupleQuests
+  generateCoupleQuests,
+  generateTelepathyQuestion
 };

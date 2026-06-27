@@ -75,6 +75,14 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    dailySpinAssignedDate: {
+      type: String,
+      default: null,
+    },
+    dailySpinCount: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );

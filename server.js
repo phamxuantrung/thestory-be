@@ -20,6 +20,9 @@ const treeRoutes = require('./routes/treeRoutes');
 const questRoutes = require('./routes/quests');
 const storeRoutes = require('./routes/store');
 const heartRoutes = require('./routes/heartRoutes');
+const telepathyRoutes = require('./routes/telepathyRoutes');
+const luckyWheelRoutes = require('./routes/luckyWheelRoutes');
+const { startCronJobs } = require('./services/cronService');
 const seedUsers = require('./utils/seedUsers');
 const User = require('./models/User');
 const Message = require('./models/Message');
@@ -35,6 +38,12 @@ const io = new Server(server, {
     credentials: true,
   },
 });
+
+// Lưu io vào app để controller có thể gọi
+app.set('io', io);
+
+// Khởi chạy hệ thống tự động (Cron Job)
+startCronJobs(app);
 
 // Tạo thư mục uploads nếu chưa có
 const uploadsDir = path.join(__dirname, 'uploads');
@@ -60,6 +69,8 @@ app.use('/api/locations', locationRoutes);
 app.use('/api/tree', treeRoutes);
 app.use('/api/store', storeRoutes);
 app.use('/api/heart', heartRoutes);
+app.use('/api/telepathy', telepathyRoutes);
+app.use('/api/wheel', luckyWheelRoutes);
 
 
 // Health check
@@ -101,6 +112,14 @@ io.on('connection', (socket) => {
     const user = await User.findById(data.createdBy).populate('partnerId', '_id');
     if (user && user.partnerId) {
       io.to(user.partnerId._id.toString()).emit('memory:new', data);
+    }
+  });
+
+  // Tree update — notify partner
+  socket.on('tree:update', async () => {
+    const user = await User.findById(socket.userId).populate('partnerId', '_id');
+    if (user && user.partnerId) {
+      io.to(user.partnerId._id.toString()).emit('tree:update');
     }
   });
 
