@@ -22,6 +22,7 @@ const storeRoutes = require('./routes/store');
 const heartRoutes = require('./routes/heartRoutes');
 const telepathyRoutes = require('./routes/telepathyRoutes');
 const luckyWheelRoutes = require('./routes/luckyWheelRoutes');
+const numerologyRoutes = require('./routes/numerologyRoutes');
 const { startCronJobs } = require('./services/cronService');
 const seedUsers = require('./utils/seedUsers');
 const User = require('./models/User');
@@ -71,6 +72,7 @@ app.use('/api/store', storeRoutes);
 app.use('/api/heart', heartRoutes);
 app.use('/api/telepathy', telepathyRoutes);
 app.use('/api/wheel', luckyWheelRoutes);
+app.use('/api/numerology', numerologyRoutes);
 
 
 // Health check

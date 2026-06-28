@@ -125,7 +125,50 @@ Trả về một JSON có định dạng:
   }
 };
 
+const generateDailyNumerology = async (energyNumber, userBio = '', partnerBio = '') => {
+  try {
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
+      generationConfig: {
+        responseMimeType: "application/json",
+      }
+    });
+
+    const prompt = `
+Bạn là một chuyên gia Thần số học phương Tây.
+Năng lượng chung của cặp đôi trong ngày hôm nay là số: ${energyNumber}.
+Thông tin của hai người:
+- Người 1: ${userBio || 'Không có mô tả'}
+- Người 2: ${partnerBio || 'Không có mô tả'}
+
+Dựa vào ý nghĩa của số ${energyNumber} trong Thần số học (Ví dụ: 1-Khởi đầu, 2-Kết nối, 3-Sáng tạo, 4-Ổn định, 5-Thay đổi, 6-Chăm sóc gia đình, 7-Suy ngẫm, 8-Tài chính/Tham vọng, 9-Kết thúc/Cho đi, 11-Tâm linh, 22-Kiến tạo) và tính cách của hai người.
+
+Hãy trả về một chuỗi JSON chuẩn có định dạng:
+{
+  "meaning": "Tên chủ đề ngắn gọn của ngày hôm nay (VD: Ngày của sự chăm sóc)",
+  "advice": "Lời giải thích ngắn gọn về năng lượng hôm nay ảnh hưởng thế nào đến tình cảm của hai người (khoảng 2 câu).",
+  "actionPrompt": "Gợi ý 1 hành động cụ thể và lãng mạn mà cả hai nên làm cùng nhau hôm nay để thu hút may mắn (khoảng 1 câu)."
+}
+`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let text = response.text();
+
+    text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+    return JSON.parse(text);
+  } catch (error) {
+    console.error('Lỗi khi tạo Thần số học:', error);
+    return {
+      meaning: "Ngày của kết nối",
+      advice: "Năng lượng hôm nay khuyến khích sự thấu hiểu và chia sẻ.",
+      actionPrompt: "Hãy dành thời gian để lắng nghe nhau nhiều hơn."
+    };
+  }
+};
+
 module.exports = {
   generateCoupleQuests,
-  generateTelepathyQuestion
+  generateTelepathyQuestion,
+  generateDailyNumerology
 };
