@@ -103,6 +103,8 @@ const interactTree = async (req, res) => {
 
 
     const now = new Date();
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
     const hour = getVNDate(now).getHours();
     const weather = req.body.weather || { temp: 25, rain: 0 };
     let expChange = 0;
@@ -417,15 +419,17 @@ const addReward = async (req, res) => {
     let tree = await LoveTree.findOne({ users: { $in: [req.user.id] } });
     if (!tree) return res.status(404).json({ success: false, message: 'Không tìm thấy cây' });
 
-    // Lấy số xu từ request, giới hạn tối đa 50 xu mỗi lần nhận để tránh cheat
+    // Lấy số xu từ request, không giới hạn để khớp với game
     let requestedCoins = parseInt(req.body.coins);
     if (isNaN(requestedCoins) || requestedCoins <= 0) {
-      requestedCoins = Math.floor(Math.random() * 11) + 20; // fallback 20-30 coins
+      requestedCoins = 0;
     }
-    const coinsEarned = Math.min(requestedCoins, 50);
+    const coinsEarned = requestedCoins;
 
-    tree.coins += coinsEarned;
-    await tree.save();
+    if (coinsEarned > 0) {
+      tree.coins += coinsEarned;
+      await tree.save();
+    }
 
     res.status(200).json({ success: true, message: `Bạn nhận được ${coinsEarned} Xu! 🪙`, data: tree });
   } catch (error) {
