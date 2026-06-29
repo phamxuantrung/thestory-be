@@ -305,7 +305,9 @@ const interactTree = async (req, res) => {
     userInteraction.lastActionAt = now;
 
     // Xử lý Streak
-    const allUsersActedToday = tree.userInteractions.length > 0 && tree.userInteractions.every(ui => isSameDay(ui.lastActionAt, now));
+    const allUsersActedToday = tree.users.length > 0 && tree.users.every(userId => 
+      tree.userInteractions.some(ui => ui.user.toString() === userId.toString() && isSameDay(ui.lastActionAt, now))
+    );
     if (allUsersActedToday) {
       if (!isSameDay(tree.lastStreakUpdateAt, now)) {
         if (tree.lastStreakUpdateAt && isSameDay(tree.lastStreakUpdateAt, yesterday)) {
