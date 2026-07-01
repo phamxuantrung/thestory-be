@@ -87,6 +87,22 @@ const userSchema = new mongoose.Schema(
       week: { type: String, default: '' },
       count: { type: Number, default: 0 }
     },
+    petFoods: [{
+      foodId: { type: String, required: true },
+      quantity: { type: Number, default: 0 }
+    }],
+    defenseTeam: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Pet'
+    }],
+    lastCombatDate: {
+      type: Date,
+      default: null,
+    },
+    shieldUntil: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

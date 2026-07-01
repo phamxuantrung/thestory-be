@@ -66,6 +66,7 @@ const login = async (req, res) => {
           dailyMessage: user.dailyMessage,
           dailyMessageDate: user.dailyMessageDate,
           heart: user.heart,
+          petFoods: user.petFoods || [],
         },
         partner: user.partnerId,
       },
